@@ -26,15 +26,23 @@ aside h2{font-size:15px;margin:0 0 8px}.card{border:1px solid var(--ln);border-r
 .mu{color:var(--mu);font-size:12px}.tag{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff}
 .tabs{display:flex;border-bottom:1px solid var(--ln);margin-bottom:8px}.tabs button{flex:1;border:0;background:none;padding:7px 2px;cursor:pointer;border-bottom:2px solid transparent;color:var(--mu)}.tabs button.on{color:var(--tx);border-color:var(--ac)}
 .ov{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:20}.ov .card{background:var(--pn);width:min(340px,92vw);padding:16px;display:grid;gap:10px;margin:0}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+.gf{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.gf label{display:grid;gap:3px;font-size:12px;color:var(--mu)}.gf input,.gf select{width:100%;color:var(--tx)}
+.crops{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:3px 12px;max-height:190px;overflow:auto;border:1px solid var(--ln);border-radius:6px;padding:6px 8px}.crops label{font-size:13px}
+#ov2 .card{width:min(800px,96vw);max-height:92vh;overflow:auto;align-content:start}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}.kpi div{border:1px solid var(--ln);border-radius:8px;padding:6px 9px}.kpi b{display:block;font-size:16px;line-height:1.3;white-space:nowrap}
+.wn{border-left:3px solid #C77700;background:var(--av);padding:5px 9px;border-radius:4px;font-size:12px;margin-top:4px}.wn.error{border-color:#b3261e}.wn.info{border-color:var(--ln)}
+.gt{width:100%;border-collapse:collapse;font-size:12px}.gt th,.gt td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--ln);vertical-align:top}.gt th{color:var(--mu);font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--hd);color:#fff;padding:8px 14px;border-radius:8px;z-index:30}
 select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;padding:4px 6px}
 :focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 </style></head><body>
 <nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
-<button data-a="plan">Season planning</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<button data-a="plan" id="plb">Season planning</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
 <main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
 <svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
 <div class="ov" id="ov"><div class="card"><b>Sign in</b><select id="lu"></select><input id="lp" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" data-a="dologin">Log in</button><span class="mu">Managers and owners only.</span></div></div>
+<div class="ov" id="ov2"><div class="card" role="dialog" aria-modal="true" aria-label="Season planning"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
 const IS_DEMO=!WEB_APP_URL, TIMEOUT=20000;
@@ -60,7 +68,7 @@ async function api(action,payload){if(IS_DEMO)return{ok:true};const c=new AbortC
 try{const r=await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,token:S.tok,...payload}),signal:c.signal});j=await r.json()}
 catch(e){S.net='offline';S.err='cannot reach web app';throw new Error('Could not reach the workbook')}finally{clearTimeout(t)}
 S.net='online';S.err='';if(!j.ok){if(j.error=='Session expired'){S.tok=null;S.user=null;S.needLogin=true;try{sessionStorage.removeItem('gh')}catch(x){}}throw new Error(j.error||'Workbook rejected the change')}return j}
-const WR=new Set(['vready','override','plant','ready','done','turn','term','move','verifybed','dispatch','dn','rt','appr','apprall','rej']);
+const WR=new Set(['gengo','vready','override','plant','ready','done','turn','term','move','verifybed','dispatch','dn','rt','appr','apprall','rej']);
 async function load(){const r=await api('load');BAYS.length=BEDS.length=C.length=P.length=0;S.tasks.length=0;
 ACTS.length=0;ACTS.push(...(r.activities||[]));if(!IS_DEMO&&!r.activities)toast('Web app is out of date: redeploy Code_GH.gs as a new version');else if(!IS_DEMO&&!r.activities.length)toast('ACTIVITIES_REFERENCE has no rows with Active = Yes');BAYS.push(...r.bays);BEDS.push(...r.beds);C.push(...r.cohorts);P.push(...r.proposals);S.tasks.push(...r.tasks.map((t,i)=>({...t,i})));
 if(r.workers&&r.workers.length){WORKERS.length=0;WORKERS.push(...r.workers)}
@@ -77,7 +85,7 @@ if(c)return STAGE[c.stage];return{PROPOSED:'#F6E3B0',UNVERIFIED:'#cfd4d0',AVAILA
 const el=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 function drawTop(){el('net').innerHTML=S.net=='demo'?'Demo mode (no web app URL)':S.net=='wait'?'Connecting...':S.net=='online'?`<span class="dot" style="background:#66bb6a"></span>Connected${S.upd?' - updated '+S.upd:''}`:`<span class="dot" style="background:#ef5350"></span>Not connected${S.err?': '+esc(S.err):''}`;
-el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
+el('plb').style.display=canGen()?'':'none';el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
 el('tb').innerHTML=['ALL','OCCUPIED','PROPOSED','AVAILABLE','UNVERIFIED','POST_HARVEST','EXCEPTION'].map(f=>`<button class="chip ${S.filt==f?'on':''}" data-f="${f}">${f.replace('_',' ').toLowerCase()}</button>`).join('')+`<button class="btn" data-a="queue">Assignment queue (${P.length})</button>`;
 el('vw').innerHTML=['stage','queue'].map(v=>`<button class="chip ${S.view==v?'on':''}" data-v="${v}">${v=='stage'?'Current stage':'Queue priority'}</button>`).join('');
 const L=S.view=='stage'?Object.entries(STAGE):Object.entries(QCOL);el('lg2').innerHTML=L.map(([k,v])=>`<span><i style="background:${v}"></i>${k.replace('_',' ').toLowerCase()}</span>`).join('')+'<span><i style="background:#E4EDE6;border:1px solid #9bb0a2"></i>available</span>'}
@@ -120,9 +128,51 @@ if(S.tab=='Exceptions'){h+=EX.filter(e=>e.bed==b).map(e=>`<div class="card row s
 if(S.tab=='Harvest'){h+=c?`<div class="card">Expected first harvest<br><b>${c.hs}</b> to <b>${c.he}</b><div class="mu">${c.stage=='HARVEST_READY'?'Ready now. Dispatch a harvest task, then mark harvest complete.':'Not ready yet.'}</div></div>${c.stage=='HARVEST_READY'?'<button class="btn" data-a="done">Mark harvest complete</button>':''}`:'<p class="mu">No cohort to harvest.</p>'}
 el('side').innerHTML=h;const pl1=el('pl');if(pl1)pl1.scrollTop=S.psc||0}
 function drawQueue(){el('side').innerHTML=`<div class="row sp"><h2>Assignment queue</h2><button class="btn o" data-a="close">Close</button></div><p class="mu">Proposed bed placements for planned cohorts. Nothing is written to production until you approve.</p>${P.length?`<button class="btn" data-a="apprall">Approve all</button>`:''}${P.map(p=>`<div class="card"><b>${esc(p.crop)}</b><div class="mu">${p.id} - plant ${p.date}</div><div class="row" style="margin-top:6px"><select id="q-${p.id}">${BEDS.map(b=>`<option ${b.id==p.rec?'selected':''}>${b.id}</option>`).join('')}</select><button class="btn" data-a="appr" data-i="${p.id}">Approve</button><button class="btn r" data-a="rej" data-i="${p.id}">Reject</button></div></div>`).join('')||'<p class="mu">Queue is clear.</p>'}`}
-function all(){drawTop();drawMap();side()}
+function all(){if(S.needLogin)S.gen=null;drawTop();drawMap();side();drawGenView()}
 async function approve(id){const p=P.find(x=>x.id==id),bed=(el('q-'+id)||{}).value||p.rec;if(C.find(c=>c.bed==bed&&c.stage!='TERMINATED'&&c.stage!='HARVEST_COMPLETE')){toast(bed+' is occupied. Pick another bed.');return false}
 await api('approveAssignment',{cohort:id,bed});C.push({id,crop:p.crop,bed,stage:'PRE_PLANTING',dob:p.date,hs:p.date,he:p.date});P.splice(P.indexOf(p),1);return true}
+/* ---- Season planning (Manager only): fill the form, Preview (writes nothing), then Generate ---- */
+const canGen=()=>!!S.user&&(S.user===true||String(S.user.role||'').toLowerCase()=='manager');
+const gIn=c=>c.hasSchedule&&(S.gen.form.bay=='ALL'||c.bay==S.gen.form.bay),gSel=()=>S.gen.init.crops.filter(c=>gIn(c)&&S.gen.crops.has(c.id));
+function genSync(){const g=S.gen,f=g.form,v=i=>{const x=el(i);return x?x.value:null};if(!el('g-year'))return;f.year=v('g-year');f.interval=v('g-int');f.waves=v('g-wav');f.bay=v('g-bay')}
+function gCrops(){const g=S.gen;return g.init.crops.map(c=>{const off=!c.hasSchedule,out=!off&&!gIn(c);return `<label style="${off||out?'opacity:.5':''}"><input type="checkbox" data-gc="${esc(c.id)}" ${gIn(c)&&g.crops.has(c.id)?'checked':''} ${off||out?'disabled':''}> ${esc(c.name)} <span class="mu">${esc(c.bay||'')}${c.type=='PERMANENT'?' - permanent':''}${off?' - no wave schedule':''}</span></label>`}).join('')}
+function genStatus(){const g=S.gen,go=el('ggo');if(!go)return;go.disabled=g.busy||!(g.res&&!g.res.blocked&&g.res.summary.cohorts>0);el('gprev').disabled=g.busy;el('gcnt').textContent=gSel().length+' of '+g.init.crops.filter(gIn).length+' selected'}
+function genDirty(){const g=S.gen;if(!g)return;g.res=null;const r=el('gres');if(r)r.innerHTML='';const m=el('gmsg');if(m)m.textContent='Inputs changed: run Preview again.';genStatus()}
+function genBusy(t){const m=el('gmsg');if(m)m.textContent=t;['gprev','ggo'].forEach(i=>{const b=el(i);if(b)b.disabled=true})}
+function genRead(){const g=S.gen;genSync();const f=g.form,n=k=>Number(f[k]);
+if(!Number.isInteger(n('year'))||n('year')<2000||n('year')>2100){toast('Enter a plan year, for example 2028');return null}
+if(!Number.isInteger(n('interval'))||n('interval')<1||n('interval')>120){toast('Wave interval must be whole days, 1 to 120');return null}
+if(!Number.isInteger(n('waves'))||n('waves')<1||n('waves')>g.init.maxWaves){toast('Number of waves must be 1 to '+g.init.maxWaves);return null}
+const crops=gSel().map(c=>c.id);if(!crops.length){toast('Select at least one crop');return null}
+return{year:n('year'),interval:n('interval'),waves:n('waves'),bay:f.bay,crops}}
+function genRes(r){const s=r.summary,k=(l,v)=>`<div><span class="mu">${l}</span><b>${esc(v)}</b></div>`,ic={error:'&#9888; ',warn:'&#9888; ',info:'&#8505; '};
+let h=`<div class="kpi">${k('Crops',s.crops)}${k('New cohorts',s.cohorts)}${k('Already exist (skipped)',s.skipped)}${k('First wave',s.first||'-')}${k('Last wave',s.last||'-')}${s.stopRule?k('Stopped by stop rule',s.stopRule):''}</div>`;
+h+=r.warnings.map(w=>`<div class="wn ${w.level}">${ic[w.level]||''}${esc(w.msg)}</div>`).join('');
+if(!r.warnings.length)h+='<div class="wn info">No warnings.</div>';
+if(!s.cohorts)h+=`<div class="wn info"><b>Nothing new to generate.</b> ${s.skipped?'Every cohort in this selection already exists.':'No cohorts match this selection.'}</div>`;
+if(r.plan.length)h+=`<div style="overflow-x:auto"><table class="gt"><thead><tr><th>Crop</th><th>Bay</th><th>Beds</th><th>New waves (planting date)</th><th>Not generated</th></tr></thead><tbody>${r.plan.slice().sort((a,b)=>String((a.waves[0]||a.skipped[0]||a.dropped[0]||{}).date).localeCompare(String((b.waves[0]||b.skipped[0]||b.dropped[0]||{}).date))).map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.bay)}</td><td>${esc(p.beds.join(', '))}</td><td>${p.waves.map(w=>'W'+w.wave+' '+w.date).join('<br>')||'-'}</td><td class="mu">${[p.skipped.length?p.skipped.length+' already exist':'',p.dropped.length?p.dropped.length+' after restart '+p.resumes:''].filter(Boolean).join('<br>')||'-'}</td></tr>`).join('')}</tbody></table></div>`;
+const c=r.capacity;h+=`<div class="mu">Free formula rows: planner ${c.planner}, cohorts ${c.cohort}, assignment queue ${c.assignment}. This run uses ${c.needed}.</div>`;return h}
+function genDone(r){const s=r.summary,k=(l,v)=>`<div><span class="mu">${l}</span><b>${esc(v)}</b></div>`,n=r.created.cohorts,sk=r.skipped.map(x=>x.id);
+return `<div class="row sp"><b style="font-size:16px">${n?'Season '+s.year+' generated':'Nothing was written'}</b><button class="btn o" data-a="genclose">Close</button></div>
+<div class="kpi">${k('Cohorts created',n)}${k('Seasonal Planner rows',r.created.planner)}${k('Cohort Production rows',r.created.cohorts)}${k('Assignment queue',r.created.assignments)}${k('Skipped (already existed)',s.skipped)}</div>
+${n?`<div class="mu">${esc(r.ids[0])} to ${esc(r.ids[r.ids.length-1])}. First wave ${s.first}, last wave ${s.last}. All three tabs were saved together.</div>`:'<div class="wn info">Every cohort in this selection already existed, so nothing was changed.</div>'}
+${sk.length?`<div class="mu">Skipped: ${esc(sk.slice(0,12).join(', '))}${sk.length>12?' and '+(sk.length-12)+' more':''}</div>`:''}
+${r.warnings.filter(w=>w.level!='info').map(w=>`<div class="wn ${w.level}">&#9888; ${esc(w.msg)}</div>`).join('')}
+<div class="mu">Next: open the assignment queue, approve or change each proposed bed, then the nursery team verifies planting on the ground.</div>
+<div class="row"><button class="btn" data-a="genq">Open assignment queue (${P.length})</button><button class="btn o" data-a="genclose">Close</button></div>`}
+function drawGen(){const g=S.gen,box=el('ov2').firstElementChild,f=g.form;
+if(g.done){box.innerHTML=genDone(g.done);return}
+box.innerHTML=`<div class="row sp"><b style="font-size:16px">Season planning</b><button class="btn o" data-a="genclose">Close</button></div>
+<div class="mu">Builds the season blueprint (Seasonal Planner), the cohorts (Cohort Production) and a proposed bed for each cohort (Assignment queue). Preview writes nothing.</div>
+<div class="gf"><label>Plan year<input id="g-year" type="number" min="2000" max="2100" value="${esc(f.year)}"></label>
+<label>Bay<select id="g-bay"><option value="ALL">All bays (GH-1 to GH-4)</option>${g.init.bays.map(b=>`<option value="${esc(b[0])}" ${f.bay==b[0]?'selected':''}>${esc(b[0])} - ${esc(b[1])}</option>`).join('')}</select></label>
+<label>Wave interval (days)<input id="g-int" type="number" min="1" max="120" value="${esc(f.interval)}"></label>
+<label>Number of waves<input id="g-wav" type="number" min="1" max="${g.init.maxWaves}" value="${esc(f.waves)}"></label></div>
+<div class="row sp"><b>Crops <span class="mu" id="gcnt"></span></b><span class="row"><button class="chip" data-a="genall">Select all</button><button class="chip" data-a="gennone">Clear</button></span></div>
+<div class="crops" id="gcrops">${gCrops()}</div>
+<div class="row"><button class="btn o" data-a="genprev" id="gprev">Preview</button><button class="btn" data-a="gengo" id="ggo" disabled>Generate</button><span class="mu" id="gmsg" role="status">${g.res?'':'Run Preview to enable Generate.'}</span></div>
+<div id="gres">${g.res?genRes(g.res):''}</div>`;genStatus()}
+function drawGenView(){const o=el('ov2'),g=S.gen;o.style.display=g?'flex':'none';if(g&&g.render){g.render=false;drawGen();if(g.fresh){g.fresh=false;const x=el('g-year');if(x)x.focus()}}}
 document.addEventListener('click',async e=>{const pl0=el('pl');if(pl0)S.psc=pl0.scrollTop;const t=e.target.closest('[data-a],[data-f],[data-v],[data-b],[data-t],[data-c]');if(!t)return;const D=t.dataset,b=S.sel,c=b&&cohortOf(b);
 if(D.f)S.filt=D.f;else if(D.v)S.view=D.v;else if(D.b){S.sel=D.b;S.queue=false;S.tab='Overview';S.picked=[]}else if(D.t)S.tab=D.t;else if(D.c)S.cat=D.c;
 else try{switch(D.a){case'close':S.sel=null;S.queue=false;break;case'queue':S.queue=true;break;case'theme':document.documentElement.dataset.theme=document.documentElement.dataset.theme=='dark'?'light':'dark';break;
@@ -133,7 +183,14 @@ case'wk':S.crew.has(D.i)?S.crew.delete(D.i):S.crew.add(D.i);break;case'allw':S.c
 case'clrp':S.picked=[];break;case'pick':{const i=S.picked.findIndex(q=>q.act==D.i);i<0?S.picked.push({act:D.i,crew:null}):S.picked.splice(i,1);break}case'rmp':S.picked.splice(+D.i,1);break;case'cust':{const q=S.picked[+D.i];q.crew=q.crew?null:[...S.crew];break}
 case'pwk':{const q=S.picked[+D.i];q.crew=q.crew.includes(D.w)?q.crew.filter(x=>x!=D.w):[...q.crew,D.w];break}
 case'override':{const st=el('ovs').value,r=el('ovr').value.trim();if(!st||!r){toast('Pick a step and write the reason');return}await api('override',{bed:b,act:st,reason:r});(DONE[b]=DONE[b]||[]).push(st);toast('Override logged');break}
-case'plan':toast('Season planning opens SEASONAL_PLANNER (goPlanning)');break;
+case'plan':{if(IS_DEMO){toast('Season planning needs the connected workbook (demo mode has no data)');break}if(!canGen()){toast('Season planning is for the Manager role');break}const i=await api('planInit');S.gen={init:i,form:{year:i.defaults.year,interval:i.defaults.interval,waves:i.defaults.waves,bay:'ALL'},crops:new Set(i.crops.filter(c=>c.hasSchedule).map(c=>c.id)),res:null,done:null,payload:null,busy:false,render:true,fresh:true};break}
+case'genclose':if(S.gen&&!S.gen.busy)S.gen=null;break;
+case'genq':S.gen=null;S.sel=null;S.queue=true;break;
+case'genall':{const g=S.gen;g.init.crops.filter(gIn).forEach(c=>g.crops.add(c.id));genDirty();g.render=true;break}
+case'gennone':{const g=S.gen;g.init.crops.forEach(c=>g.crops.delete(c.id));genDirty();g.render=true;break}
+case'genprev':{const g=S.gen;if(g.busy)break;const p=genRead();if(!p)break;g.busy=true;genBusy('Calculating preview...');try{g.res=await api('planPreview',p);g.payload=p;g.fresh=false}finally{g.busy=false;g.render=true}break}
+case'gengo':{const g=S.gen;if(g.busy||!g.res||g.res.blocked||!g.payload)break;const s=g.res.summary;if(!confirm('Write '+s.cohorts+' new cohorts for '+s.year+' to the Seasonal Planner, Cohort Production and the Assignment queue?\n'+(s.skipped?s.skipped+' that already exist will be skipped.\n':'')+'All three are saved together or not at all.'))break;
+g.busy=true;genBusy('Generating...');try{g.done=await api('planGenerate',g.payload)}finally{g.busy=false;g.render=true}break}
 case'vready':{const need=ACTS.filter(a=>a.phase=='Pre-Planting'&&a.req=='Yes').map(a=>a.name),dn=DONE[b]||[],miss=need.filter(x=>!dn.includes(x));let reason='';if(miss.length){reason=prompt('Not complete on this bed: '+miss.join(', ')+'\nWritten reason to verify anyway (required):');if(!reason)break}await api('verifyBedReady',{cohort:c.id,reason});c.ver=true;toast('Bed verified ready to plant');break}
 case'plant':{const pd=el('pd').value;if(!pd){toast('Enter the date');return}if(pd>d(0)){toast('Date cannot be in the future');return}await api('recordPlanting',{cohort:c.id,date:pd});c.stage='GROWING';c.dob=pd;toast(dl(c)+' recorded');break}
 case'ready':{let reason='';if(d(0)<c.hs){reason=prompt('Earliest harvest is '+c.hs+'. Written reason to verify maturity early (required):');if(!reason)break}await api('verifyReady',{cohort:c.id,reason});c.stage='HARVEST_READY';toast('Harvest maturity verified');break}
@@ -151,8 +208,11 @@ case'appr':if(await approve(D.i))toast('Assignment approved');break;case'apprall
 case'rej':{const r=prompt('Reason for rejecting this proposal?');if(r){await api('rejectAssignment',{cohort:D.i,reason:r});P.splice(P.findIndex(x=>x.id==D.i),1);toast('Proposal rejected')}break}}
 if(!IS_DEMO&&WR.has(D.a))await load()}catch(err){toast(err.message)}
 all()});
-document.addEventListener('change',e=>{if(e.target.id=='addact'&&e.target.value){S.picked.push({act:e.target.value,crew:null});all()}});
-document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.id=='lp')document.querySelector('[data-a=dologin]').click();if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.b){e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+document.addEventListener('change',e=>{const t=e.target,g=S.gen;if(g&&t.dataset&&t.dataset.gc){t.checked?g.crops.add(t.dataset.gc):g.crops.delete(t.dataset.gc);genDirty();return}
+if(g&&t.id=='g-bay'){genSync();el('gcrops').innerHTML=gCrops();genDirty();return}
+if(t.id=='addact'&&t.value){S.picked.push({act:t.value,crew:null});all()}});
+document.addEventListener('input',e=>{const t=e.target;if(S.gen&&t.id&&t.id.slice(0,2)=='g-'&&t.id!='g-bay'){genSync();genDirty()}});
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.gen&&!S.gen.busy){S.gen=null;all();return}if(e.key=='Enter'&&e.target.id=='lp')document.querySelector('[data-a=dologin]').click();if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.b){e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
 (async()=>{if(IS_DEMO){all();return}
 [BAYS,BEDS,C,P,EX,S.tasks].forEach(a=>a.length=0);
 try{const sv=JSON.parse(sessionStorage.getItem('gh')||'null');if(sv){S.tok=sv.tok;S.user=sv.user}}catch(x){}

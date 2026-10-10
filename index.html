@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GH_ranch_aab - Activity Assignment Board</title>
+<style>
+:root{--bg:#f2f5f1;--pn:#fff;--tx:#1b2a22;--mu:#5d6d64;--ln:#d3ddd5;--hd:#1f3a2e;--ac:#2e7d32;--av:#e4ede6;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#121a15;--pn:#1b261f;--tx:#e6eee8;--mu:#9bb0a2;--ln:#2e4034;--hd:#0c1510;--av:#243228}}
+:root[data-theme=dark]{--bg:#121a15;--pn:#1b261f;--tx:#e6eee8;--mu:#9bb0a2;--ln:#2e4034;--hd:#0c1510;--av:#243228}
+html,body{height:100%;margin:0}body{background:var(--bg);color:var(--tx);font:14px/1.4 "Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column}
+*{box-sizing:border-box}button,select,input{font:inherit;color:inherit}
+nav{background:var(--hd);color:#fff;display:flex;align-items:center;gap:12px;padding:8px 14px;flex-wrap:wrap}
+nav h1{font-size:16px;margin:0;font-weight:600;flex:1}nav button{background:#ffffff1f;border:0;border-radius:6px;padding:6px 10px;color:#fff;cursor:pointer}
+.pill{font-size:12px;padding:3px 8px;border-radius:99px;background:#ffffff1f}
+main{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 340px;min-height:0}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.map{padding:10px;overflow:auto}.tb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center}
+.chip{border:1px solid var(--ln);background:var(--pn);border-radius:99px;padding:4px 10px;cursor:pointer;font-size:12px}.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.leg{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--mu);margin:6px 0}.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+svg{width:100%;height:auto;background:var(--pn);border:1px solid var(--ln);border-radius:10px}svg .bed{cursor:pointer}svg .bed:focus{outline:none}svg .bed:focus rect,svg .bed:hover rect{stroke:var(--tx);stroke-width:2}
+aside{background:var(--pn);border-left:1px solid var(--ln);overflow:auto;padding:12px}
+@media(max-width:900px){aside{border-left:0;border-top:1px solid var(--ln)}}
+aside h2{font-size:15px;margin:0 0 8px}.card{border:1px solid var(--ln);border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.row.sp{justify-content:space-between}
+.btn{border:1px solid var(--ac);background:var(--ac);color:#fff;border-radius:6px;padding:5px 10px;cursor:pointer}.btn.o{background:transparent;color:var(--ac)}.btn.r{background:#b3261e;border-color:#b3261e}
+.mu{color:var(--mu);font-size:12px}.tag{font-size:11px;padding:2px 7px;border-radius:99px;color:#fff}
+.tabs{display:flex;border-bottom:1px solid var(--ln);margin-bottom:8px}.tabs button{flex:1;border:0;background:none;padding:7px 2px;cursor:pointer;border-bottom:2px solid transparent;color:var(--mu)}.tabs button.on{color:var(--tx);border-color:var(--ac)}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--hd);color:#fff;padding:8px 14px;border-radius:8px;z-index:9}
+select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;padding:4px 6px}
+:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+</style></head><body>
+<nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
+<button data-a="plan">Season planning</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
+<svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
+<script>
+const WEB_APP_URL='';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
+const IS_DEMO=!WEB_APP_URL, TIMEOUT=20000;
+const STAGE={PRE_PLANTING:'#D8CFAE',GROWING:'#8FBF8A',HARVEST_READY:'#2E7D32',HARVEST_COMPLETE:'#7C8B98',TERMINATED:'#C9C2AE'};
+const QCOL={MUST_DO:'#B3261E',ATTENTION:'#C77700',ROUTINE:'#5B8FC9',PROPOSED:'#E0A526'};
+const BAYS=[['GH-1','Bay 1 Cold zone','R',5],['GH-2','Bay 2 Temperate canopy','B',8],['GH-3','Bay 3 Indigenous specialty','B',8],['GH-4','Bay 4 Tropical high-wire','G',5]];
+const BEDS=[];BAYS.forEach(b=>{for(let i=1;i<=b[3];i++)BEDS.push({id:`${b[0]}-${b[2]}${String(i).padStart(2,'0')}`,bay:b[0],ok:true})});
+BEDS.find(b=>b.id=='GH-3-B08').ok=false;
+const d=o=>{const x=new Date();x.setDate(x.getDate()+o);return x.toISOString().slice(0,10)};
+const C=[['ASP-GH-2027-W01','Asparagus','GH-1-R01','GROWING',-240,730,730],['SP-GH-2027-W01','Sweet Potatoes','GH-1-R02','GROWING',-120,100,120],['CAR-GH-2027-W01','Carrots','GH-1-R04','GROWING',-35,65,80],['BRO-GH-2027-W01','Broccoli','GH-1-R05','PRE_PLANTING',5,60,80],
+['LET-GH-2027-W01','Lettuce','GH-2-B01','HARVEST_READY',-50,45,60],['LET-GH-2027-W02','Lettuce','GH-2-B02','GROWING',-30,45,60],['SPI-GH-2027-W01','Spinach','GH-2-B03','PRE_PLANTING',2,35,45],['KAL-GH-2027-W01','Kale','GH-2-B04','GROWING',-40,55,75],['CHD-GH-2027-W01','Swiss Chard','GH-2-B06','HARVEST_COMPLETE',-70,45,60],
+['BTL-GH-2027-W01','Bitter Leaf','GH-3-B01','GROWING',-150,60,60],['UGW-GH-2027-W01','Ugwu','GH-3-B02','GROWING',-90,60,90],['UGW-GH-2027-W02','Ugwu','GH-3-B03','HARVEST_READY',-95,60,90],['SUK-GH-2027-W01','Sukuma Wiki','GH-3-B04','GROWING',-20,50,70],
+['PLN-GH-2027-W01','Plantains','GH-4-G01','GROWING',-200,365,540],['TOM-GH-2027-W01','Tomatoes','GH-4-G02','GROWING',-45,60,80],['PEP-GH-2027-W01','Peppers','GH-4-G04','TERMINATED',-60,65,75]]
+.map(c=>({id:c[0],crop:c[1],bed:c[2],stage:c[3],dob:d(c[4]),hs:d(c[4]+c[5]),he:d(c[4]+c[6])}));
+const P=[['ONI-GH-2027-W01','Onions','GH-1-R03',7],['TUR-GH-2027-W01','Turnips','GH-1-R03',14],['COL-GH-2027-W01','Collard Greens','GH-2-B07',9],['MUS-GH-2027-W01','Mustard Greens','GH-2-B08',12],['MCH-GH-2027-W01','Mchicha','GH-3-B05',10],['AMG-GH-2027-W01','Amaranth Grain','GH-4-G02',21],['EGG-GH-2027-W01','Eggplant','GH-4-G03',8],['HAB-GH-2027-W01','Habanero','GH-4-G05',16]]
+.map(p=>({id:p[0],crop:p[1],rec:p[2],date:d(p[3])}));
+const EX=[{id:'EX-1',bed:'GH-4-G02',type:'Gutter drip leak',sev:'HIGH',open:true,note:'Reported on morning walk'}];
+const ACT={'Soil & Bed Prep':['Pull plastic & drip','Bed prep & fertigation check','Install trellis'],'Crop Maintenance':['Prune & train','Scout pests','Irrigation check','Thin & weed'],'Harvest Operations':['Harvest','Grade & pack','Haul to cooler'],'Post-Harvest & Sanitation':['Clear debris','Power-wash bench or flush gutter','Verify bed ready']};
+const WORKERS=['lisa','john','amara','kofi'];
+const S={view:'stage',filt:'ALL',sel:null,tab:'Overview',net:IS_DEMO?'demo':'online',tasks:[],cat:'Soil & Bed Prep',user:true,queue:false};
+async function api(action,payload){if(IS_DEMO)return{ok:true};const c=new AbortController(),t=setTimeout(()=>c.abort(),TIMEOUT);let j;
+try{const r=await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action,...payload}),signal:c.signal});j=await r.json()}
+catch(e){S.net='offline';throw new Error('Could not reach the workbook')}finally{clearTimeout(t)}
+S.net='online';if(!j.ok)throw new Error(j.error||'Workbook rejected the change');return j}
+const WR=new Set(['plant','ready','done','turn','term','move','verifybed','dispatch','dn','rt','appr','apprall','rej']);
+async function load(){const r=await api('load');BAYS.length=BEDS.length=C.length=P.length=0;S.tasks.length=0;
+BAYS.push(...r.bays);BEDS.push(...r.beds);C.push(...r.cohorts);P.push(...r.proposals);S.tasks.push(...r.tasks.map((t,i)=>({...t,i})));
+if(r.workers&&r.workers.length){WORKERS.length=0;WORKERS.push(...r.workers)}}
+const cohortOf=b=>C.find(c=>c.bed==b&&c.stage!='TERMINATED'&&c.stage!='HARVEST_COMPLETE')||C.find(c=>c.bed==b);
+const propOf=b=>P.filter(p=>p.rec==b);
+const exOf=b=>EX.filter(e=>e.bed==b&&e.open);
+const tasksOf=b=>S.tasks.filter(t=>t.bed==b&&t.st!='DONE');
+function state(b){const bd=BEDS.find(x=>x.id==b),c=cohortOf(b);
+if(exOf(b).length)return'EXCEPTION';if(!bd.ok)return'UNVERIFIED';if(c&&(c.stage=='HARVEST_COMPLETE'||c.stage=='TERMINATED'))return'POST_HARVEST';if(c)return'OCCUPIED';if(propOf(b).length)return'PROPOSED';return'AVAILABLE'}
+function queue(b){const c=cohortOf(b);if(exOf(b).length||(c&&c.stage=='HARVEST_READY'))return'MUST_DO';if(c&&(c.stage=='PRE_PLANTING'||state(b)=='POST_HARVEST'))return'ATTENTION';if(c)return'ROUTINE';if(propOf(b).length)return'PROPOSED';return null}
+function fill(b){const st=state(b),c=cohortOf(b);if(S.view=='queue'){const q=queue(b);return q?QCOL[q]:'#E4EDE6'}
+if(c)return STAGE[c.stage];return{PROPOSED:'#F6E3B0',UNVERIFIED:'#cfd4d0',AVAILABLE:'#E4EDE6',EXCEPTION:'#F2C4BF'}[st]||'#E4EDE6'}
+const el=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function drawTop(){el('net').textContent=S.net=='demo'?'Demo mode':S.net=='online'?'Online':'Offline';el('lg').textContent=S.user?'Log out':'Log in';
+el('tb').innerHTML=['ALL','OCCUPIED','PROPOSED','AVAILABLE','UNVERIFIED','POST_HARVEST','EXCEPTION'].map(f=>`<button class="chip ${S.filt==f?'on':''}" data-f="${f}">${f.replace('_',' ').toLowerCase()}</button>`).join('')+`<button class="btn" data-a="queue">Assignment queue (${P.length})</button>`;
+el('vw').innerHTML=['stage','queue'].map(v=>`<button class="chip ${S.view==v?'on':''}" data-v="${v}">${v=='stage'?'Current stage':'Queue priority'}</button>`).join('');
+const L=S.view=='stage'?Object.entries(STAGE):Object.entries(QCOL);el('lg2').innerHTML=L.map(([k,v])=>`<span><i style="background:${v}"></i>${k.replace('_',' ').toLowerCase()}</span>`).join('')+'<span><i style="background:#E4EDE6;border:1px solid #9bb0a2"></i>available</span>'}
+function drawMap(){let y=14,h='';BAYS.forEach(b=>{h+=`<text x="12" y="${y+8}" font-size="13" font-weight="600" fill="var(--tx)">${b[1]}</text>`;y+=16;
+BEDS.filter(x=>x.bay==b[0]).forEach(bd=>{const st=state(bd.id),c=cohortOf(bd.id),dim=S.filt!='ALL'&&S.filt!=st,tk=tasksOf(bd.id).length,ex=exOf(bd.id).length,sel=S.sel==bd.id;
+const lab=c?c.crop:propOf(bd.id).length?'Proposed: '+propOf(bd.id).map(p=>p.crop).join(', '):st=='UNVERIFIED'?'Not verified':'Available';
+h+=`<g class="bed" tabindex="0" role="button" data-b="${bd.id}" opacity="${dim?.25:1}" aria-label="${bd.id} ${esc(lab)}"><rect x="12" y="${y}" width="756" height="26" rx="5" fill="${fill(bd.id)}" stroke="${sel?'var(--tx)':st=='PROPOSED'?'#C77700':st=='UNVERIFIED'?'#889':'var(--ln)'}" stroke-width="${sel?2.5:1}" ${st=='PROPOSED'||st=='UNVERIFIED'?'stroke-dasharray="5 3"':''}/>
+<text x="22" y="${y+17}" font-size="12" font-weight="600" fill="#12201a">${bd.id}</text><text x="108" y="${y+17}" font-size="12" fill="#12201a">${esc(lab)}${c?' - '+c.stage.replace('_',' ').toLowerCase():''}</text>
+${ex?`<circle cx="744" cy="${y+13}" r="8" fill="#B3261E"/><text x="744" y="${y+17}" font-size="11" text-anchor="middle" fill="#fff">!</text>`:''}${tk?`<circle cx="720" cy="${y+13}" r="8" fill="#1f3a2e"/><text x="720" y="${y+17}" font-size="11" text-anchor="middle" fill="#fff">${tk}</text>`:''}
+${c&&c.stage=='HARVEST_READY'?`<text x="692" y="${y+18}" font-size="14">&#9986;</text>`:''}</g>`;y+=30});y+=10});
+el('svg').setAttribute('viewBox','0 0 780 '+y);el('svg').innerHTML=h}
+function side(){if(S.queue)return drawQueue();const b=S.sel;if(!b){el('side').innerHTML='<h2>Select a bed</h2><p class="mu">Tap a bed on the map to see its cohort, dispatch tasks and handle exceptions. Open the assignment queue to review proposed bed placements.</p>';return}
+const c=cohortOf(b),st=state(b);let h=`<div class="row sp"><h2>${b}</h2><button class="btn o" data-a="close">Close</button></div><div class="mu">${st.replace('_',' ').toLowerCase()}${c?' - '+esc(c.crop):''}</div><div class="tabs">${['Overview','Activity','Exceptions','Harvest'].map(t=>`<button class="${S.tab==t?'on':''}" data-t="${t}">${t}</button>`).join('')}</div>`;
+if(S.tab=='Overview'){h+=c?`<div class="card"><b>${esc(c.crop)}</b> <span class="tag" style="background:${STAGE[c.stage]};color:#12201a">${c.stage.replace('_',' ')}</span><div class="mu">${c.id}<br>Planted ${c.dob}<br>First harvest ${c.hs} to ${c.he}</div></div><div class="row">${
+c.stage=='PRE_PLANTING'?'<button class="btn" data-a="plant">Verify planting</button>':''}${c.stage=='GROWING'?'<button class="btn" data-a="ready">Verify harvest ready</button>':''}${c.stage=='HARVEST_COMPLETE'||c.stage=='TERMINATED'?'<button class="btn" data-a="turn">Verify bed turnover</button>':''}${c.stage!='TERMINATED'&&c.stage!='HARVEST_COMPLETE'?'<button class="btn o" data-a="move">Move cohort</button><button class="btn r" data-a="term">Terminate</button>':''}</div>`
+:`<div class="card">No cohort on this bed.${propOf(b).map(p=>`<div class="mu">Proposed: ${p.id} on ${p.date}</div>`).join('')}${BEDS.find(x=>x.id==b).ok?'':'<div class="mu">Bed status not verified in GH_BED_MASTER.</div><button class="btn" data-a="verifybed">Verify bed</button>'}</div>`}
+if(S.tab=='Activity'){h+=`<div class="row">${Object.keys(ACT).map(k=>`<button class="chip ${S.cat==k?'on':''}" data-c="${k}">${k}</button>`).join('')}</div><div class="card"><div class="row"><select id="act">${ACT[S.cat].map(a=>`<option>${a}</option>`).join('')}</select><input type="date" id="dt" value="${d(0)}"></div><div class="mu" style="margin:6px 0">Crew</div><div class="row">${WORKERS.map(w=>`<label><input type="checkbox" class="wk" value="${w}"> ${w}</label>`).join('')}</div><p><button class="btn" data-a="dispatch">Dispatch task</button></p></div>${tasksOf(b).map(t=>`<div class="card row sp"><span>${esc(t.act)}<div class="mu">${t.w} - ${t.date} - ${t.st.toLowerCase()}</div></span><span class="row"><button class="btn o" data-a="rt" data-i="${t.i}">Reassign</button><button class="btn" data-a="dn" data-i="${t.i}">Close</button></span></div>`).join('')||'<p class="mu">No live tasks on this bed.</p>'}`}
+if(S.tab=='Exceptions'){h+=EX.filter(e=>e.bed==b).map(e=>`<div class="card row sp"><span>${esc(e.type)} <span class="tag" style="background:${e.sev=='HIGH'?'#B3261E':'#C77700'}">${e.sev}</span><div class="mu">${esc(e.note)} - ${e.open?'open':'resolved'}</div></span>${e.open?`<button class="btn" data-a="res" data-i="${e.id}">Resolve</button>`:''}</div>`).join('')||'<p class="mu">No exceptions on this bed.</p>';h+=`<div class="card"><div class="row"><input id="xt" placeholder="Describe the issue"><select id="xs"><option>HIGH</option><option>MEDIUM</option></select><button class="btn o" data-a="addx">Add exception</button></div></div>`}
+if(S.tab=='Harvest'){h+=c?`<div class="card">Expected first harvest<br><b>${c.hs}</b> to <b>${c.he}</b><div class="mu">${c.stage=='HARVEST_READY'?'Ready now. Dispatch a harvest task, then mark harvest complete.':'Not ready yet.'}</div></div>${c.stage=='HARVEST_READY'?'<button class="btn" data-a="done">Mark harvest complete</button>':''}`:'<p class="mu">No cohort to harvest.</p>'}
+el('side').innerHTML=h}
+function drawQueue(){el('side').innerHTML=`<div class="row sp"><h2>Assignment queue</h2><button class="btn o" data-a="close">Close</button></div><p class="mu">Proposed bed placements for planned cohorts. Nothing is written to production until you approve.</p>${P.length?`<button class="btn" data-a="apprall">Approve all</button>`:''}${P.map(p=>`<div class="card"><b>${esc(p.crop)}</b><div class="mu">${p.id} - plant ${p.date}</div><div class="row" style="margin-top:6px"><select id="q-${p.id}">${BEDS.map(b=>`<option ${b.id==p.rec?'selected':''}>${b.id}</option>`).join('')}</select><button class="btn" data-a="appr" data-i="${p.id}">Approve</button><button class="btn r" data-a="rej" data-i="${p.id}">Reject</button></div></div>`).join('')||'<p class="mu">Queue is clear.</p>'}`}
+function all(){drawTop();drawMap();side()}
+async function approve(id){const p=P.find(x=>x.id==id),bed=(el('q-'+id)||{}).value||p.rec;if(C.find(c=>c.bed==bed&&c.stage!='TERMINATED'&&c.stage!='HARVEST_COMPLETE')){toast(bed+' is occupied. Pick another bed.');return false}
+await api('approveAssignment',{cohort:id,bed});C.push({id,crop:p.crop,bed,stage:'PRE_PLANTING',dob:p.date,hs:p.date,he:p.date});P.splice(P.indexOf(p),1);return true}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a],[data-f],[data-v],[data-b],[data-t],[data-c]');if(!t)return;const D=t.dataset,b=S.sel,c=b&&cohortOf(b);
+if(D.f)S.filt=D.f;else if(D.v)S.view=D.v;else if(D.b){S.sel=D.b;S.queue=false;S.tab='Overview'}else if(D.t)S.tab=D.t;else if(D.c)S.cat=D.c;
+else try{switch(D.a){case'close':S.sel=null;S.queue=false;break;case'queue':S.queue=true;break;case'theme':document.documentElement.dataset.theme=document.documentElement.dataset.theme=='dark'?'light':'dark';break;
+case'login':S.user=!S.user;toast(S.user?'Logged in':'Logged out');break;case'plan':toast('Season planning opens SEASONAL_PLANNER (goPlanning)');break;
+case'plant':await api('verifyPlanting',{cohort:c.id});c.stage='GROWING';toast('Planting verified');break;case'ready':await api('verifyReady',{cohort:c.id});c.stage='HARVEST_READY';toast('Marked harvest ready');break;
+case'done':await api('completeHarvest',{cohort:c.id});c.stage='HARVEST_COMPLETE';toast('Harvest complete');break;
+case'turn':await api('verifyTurnover',{bed:b});C.splice(C.indexOf(c),1);toast(b+' released as available');break;
+case'term':{const r=prompt('Reason for terminating this cohort?');if(r){await api('terminate',{cohort:c.id,reason:r});c.stage='TERMINATED';toast('Cohort terminated')}break}
+case'move':{const free=BEDS.filter(x=>x.ok&&!cohortOf(x.id)).map(x=>x.id),n=prompt('Move to which bed?\n'+free.join(', '));if(n&&free.includes(n)){await api('moveCohort',{cohort:c.id,to:n});c.bed=n;S.sel=n;toast('Moved to '+n)}else if(n)toast('Pick an available bed')}break;
+case'verifybed':await api('verifyBed',{bed:b});BEDS.find(x=>x.id==b).ok=true;toast('Bed verified');break;
+case'dispatch':{const ws=[...document.querySelectorAll('.wk:checked')].map(x=>x.value);if(!ws.length){toast('Select at least one worker');return}
+for(const w of ws){const k={i:S.tasks.length,bed:b,act:el('act').value,w,date:el('dt').value,st:'ASSIGNED'};const r=await api('dispatch',k);k.sid=r.sid;S.tasks.push(k)}toast('Dispatched to '+ws.join(', '));break}
+case'dn':await api('closeTask',{sid:S.tasks[D.i].sid});S.tasks[D.i].st='DONE';toast('Task closed');break;case'rt':{const n=prompt('Reassign to: '+WORKERS.join(', '));if(WORKERS.includes(n)){await api('reassignTask',{sid:S.tasks[D.i].sid,to:n});S.tasks[D.i].w=n;toast('Reassigned')}break}
+case'res':EX.find(x=>x.id==D.i).open=false;toast('Exception resolved');break;case'addx':if(el('xt').value){EX.push({id:'EX-'+(EX.length+1),bed:b,type:el('xt').value,sev:el('xs').value,open:true,note:'Added from board'});toast('Exception added')}break;
+case'appr':if(await approve(D.i))toast('Assignment approved');break;case'apprall':for(const p of [...P])await approve(p.id);toast('All assignments approved');break;
+case'rej':{const r=prompt('Reason for rejecting this proposal?');if(r){await api('rejectAssignment',{cohort:D.i,reason:r});P.splice(P.findIndex(x=>x.id==D.i),1);toast('Proposal rejected')}break}}
+if(!IS_DEMO&&WR.has(D.a))await load()}catch(err){toast(err.message)}
+all()});
+document.addEventListener('keydown',e=>{if(e.key=='Enter'&&e.target.dataset&&e.target.dataset.b){e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}))}});
+(async()=>{if(!IS_DEMO){[BAYS,BEDS,C,P,EX,S.tasks].forEach(a=>a.length=0);try{await load()}catch(err){toast(err.message)}}all()})();
+</script></body></html>

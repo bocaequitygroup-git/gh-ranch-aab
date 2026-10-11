@@ -36,14 +36,16 @@ aside h2{font-size:15px;margin:0 0 8px}.card{border:1px solid var(--ln);border-r
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--hd);color:#fff;padding:8px 14px;border-radius:8px;z-index:30}
 select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;padding:4px 6px}
 .chip.on{background:var(--ac);color:#fff}@media print{body>nav,main,#ov,.noprint{display:none!important}#ov2{position:static!important;background:none!important;display:block!important}#ov2 .card{box-shadow:none!important;border:0!important;max-height:none!important;overflow:visible!important}}
+.cph{margin:16px 0 4px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu);font-weight:700}.cpr{display:grid;grid-template-columns:minmax(140px,38%) 1fr;gap:10px;padding:6px 0;border-bottom:1px solid var(--ln);font-size:13px}@media(max-width:600px){.cpr{grid-template-columns:1fr;gap:2px}}
 :focus-visible{outline:2px solid var(--ac);outline-offset:1px}
 </style></head><body>
 <nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
-<button data-a="plan" id="plb">Season planning</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<button data-a="plan" id="plb">Season planning</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
 <main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
 <svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
 <div class="ov" id="ov"><div class="card"><b>Sign in</b><select id="lu"></select><input id="lp" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" data-a="dologin">Log in</button><span class="mu">Managers and owners only.</span></div></div>
 <div class="ov" id="ov2"><div class="card" role="dialog" aria-modal="true" aria-label="Season planning"></div></div>
+<div class="ov" id="ov3"><div class="card" role="dialog" aria-modal="true" aria-label="Crop profile"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
 const IS_DEMO=!WEB_APP_URL, TIMEOUT=20000;
@@ -281,6 +283,35 @@ else if(a=='yprev'){if(g.busy)return;const p=yRead();if(!p)return;g.busy=true;co
 else if(a=='ygo'){const y=g.y;if(g.busy||!y.res||y.res.blocked||!y.payload)return;if(!confirm('Write '+y.res.summary.cohorts+' cohorts for '+y.res.summary.year+' to the Seasonal Planner, Cohort Production and the Assignment queue? All three are saved together or not at all.'))return;
 g.busy=true;try{y.done=await api('yieldGenerate',y.payload);try{await load()}catch(x){}}finally{g.busy=false;g.render=true}}}catch(err){toast(err.message)}all()});
 document.addEventListener('input',e=>{const t=e.target;if(S.gen&&S.gen.tab=='yield'&&S.gen.y&&t.dataset&&t.dataset.y!==undefined){ySync();yLive();yDirty()}});
+/* ---- Crop profile: one record per crop (read for everyone on the board, edit for the Manager) ---- */
+function cpSecs(v){const nr='<span class="mu">Not recorded</span>',t=x=>x==null||x===''?nr:esc(x),d=n=>n==null?nr:esc(n+(n==1?' day':' days')),R=(l,f,key,kind,pair)=>({l,f,key,kind,pair});
+const chain=v.nurs>0?[v.germ,v.nurs,v.hard,v.est].map(x=>(x==null?'?':x)+'d').join(' → '):'Direct sow: '+(v.germ==null?'?':v.germ)+'d germination → '+(v.est==null?'?':v.est)+'d establishment';
+return [
+{h:'Identity',rows:[R('Crop ID',t(v.code)),R('Crop name',t(v.name)),R('Crop family',t(v.family),'family','s'),R('Production category',t(v.category),'category','s'),R('Cycle class',t(v.cycle))]},
+{h:'How we start it',rows:[R('Propagation method',t(v.propMethod)),R('Planting method',t(v.plantMethod)),R('DOB type',t(v.dobType)),R('Germination',d(v.germ),'germ','n'),R('Nursery duration',d(v.nurs),'nurs','n'),R('Hardening',d(v.hard),'hard','n'),R('Transplant / field establishment',d(v.est),'est','n'),R('Total pre-DOB lead time',d(v.pre)+(v.pre!=null?' <span class="mu">(germination + nursery + hardening, recalculated on save)</span>':'')),R('Notes',t(v.propNotes),'propNotes','s')]},
+{h:'Where we can produce it',rows:[R('Field / greenhouse',t(v.where)),R('Protected continuity',v.htElig?'High-tunnel eligible':'Open field only (not high-tunnel eligible)'),R('Default production block',v.block?t(v.block):'Not set','block','s'),R('Allowable planting window',t(v.window))]},
+{h:'How it grows',rows:[R('Germination → nursery → hardening → establishment',esc(chain)),R('Days to first harvest',v.fhMin==null?nr:esc(v.fhMin+(v.fhMax!=null?'–'+v.fhMax:'')+' days'),null,null,['fhMin','fhMax'])]},
+{h:'How we harvest it',rows:[R('Harvest window type',t(v.hwType),'hwType','s'),R('Recurring vs. single',v.recurring?'Recurring':'Single harvest'),R('Harvest type (ranch classification)',t(v.hType),'hType','s'),R('Succession / continuity notes',t(v.hNotes),'hNotes','s'),R('Days between harvests',v.hiMin==null?nr:esc(v.hiMin+(v.hiMax!=null?'–'+v.hiMax:'')+' days'),null,null,['hiMin','hiMax']),R('Planning harvest window',d(v.hwDays),'hwDays','n')]},
+{h:'How the ranch operates it',rows:[R('Storage class',t(v.storage),'storage','s'),R('Irrigation profile',t(v.irrId),'irrId','s'),R('High-tunnel eligible',v.htElig?'Yes':'No'),R('Fruiting stage irrigation',t(v.irrStage),'irrStage','s'),R('Heat-stress rule',t(v.heatRule),'heatRule','s'),R('Note',t(v.irrNote),'irrNote','s')]},
+{h:'Greenhouse growing notes',rows:[R('Microclimate zone',t(v.zone)),R('Optimal sowing window',t(v.sowWin)),R('Target soil temperature',t(v.soilTemp)),R('Estimated harvest window',t(v.estHarvest)),R('Horticultural notes',t(v.hortNotes))]}]}
+function cpRow(r,edit,v){let val=r.f;if(edit){const ip=(k,n)=>`<input data-cp="${k}" type="${n?'number':'text'}" ${n?'min="0"':''} value="${esc(v[k]==null?'':v[k])}" style="${n?'width:80px':'width:100%'}">`;if(r.pair)val=ip(r.pair[0],1)+' to '+ip(r.pair[1],1)+' days';else if(r.key)val=ip(r.key,r.kind=='n')+(r.kind=='n'?' days':'')}return `<div class="cpr"><span class="mu">${r.l}</span><span>${val}</span></div>`}
+function cpHtml(){const c=S.cp,v=c.v;if(!v)return '<div class="row sp"><b>Crop profile</b><button class="btn o" data-a="cpclose">Close</button></div><p class="mu">Loading...</p>';
+return `<div class="row sp" style="align-items:flex-start"><div><h2 style="margin:0">${esc(v.name)}</h2><div class="mu">${esc(v.code)}${v.family?' · '+esc(v.family):''}</div></div><span class="row"><select id="cp-pick" aria-label="Choose a crop">${c.list.map(x=>`<option value="${esc(x.id)}" ${x.id==v.id?'selected':''}>${esc(x.name)} (${esc(x.id.replace(/-GH$/,''))})</option>`).join('')}</select>${c.edit?'<button class="btn" data-a="cpsave">Save</button><button class="btn o" data-a="cpcancel">Cancel</button>':(c.canEdit?'<button class="btn o" data-a="cpedit">Edit crop</button>':'')}<button class="btn o" data-a="cpclose">Close</button></span></div>${c.edit?'<div class="wn info">Editing. Total pre-DOB lead time is recalculated when you save. Fields that are formulas in the workbook cannot be changed here.</div>':''}`
++cpSecs(v).map(s=>`<div class="cph">${s.h}</div>`+s.rows.map(r=>cpRow(r,c.edit,v)).join('')).join('')
++'<p class="mu" style="margin-top:14px">The workbook does not break out a separate vegetative vs. reproductive stage. Only the pre-DOB propagation stages and total days to first harvest are tracked. Bed assignments and layout status for this crop live in Season planning and the assignment queue. This screen is the crop record, not a specific planting.</p>'}
+function cpView(){const o=el('ov3'),c=S.cp;if(!o)return;o.style.display=c?'flex':'none';if(!c||!c.render)return;c.render=false;o.firstElementChild.innerHTML=cpHtml()}
+async function cpLoad(id){const r=await api('cropProfile',id?{crop:id}:{}),c=S.cp;c.list=r.list;c.v=r.profile;c.canEdit=r.canEdit;c.edit=false;c.render=true}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t||!/^cp/.test(t.dataset.a))return;const a=t.dataset.a;
+try{if(a=='cprof'){if(IS_DEMO){toast('Crop profile needs the connected workbook (demo mode has no data)');return}S.cp={list:[],v:null,canEdit:false,edit:false,render:true};cpView();await cpLoad()}
+else if(!S.cp)return;
+else if(a=='cpclose')S.cp=null;
+else if(a=='cpedit'){S.cp.edit=true;S.cp.render=true}
+else if(a=='cpcancel'){S.cp.edit=false;S.cp.render=true}
+else if(a=='cpsave'){const c=S.cp,f={};document.querySelectorAll('#ov3 [data-cp]').forEach(x=>{const k=x.dataset.cp,old=c.v[k]==null?'':String(c.v[k]);if(x.value.trim()!==old)f[k]=x.value.trim()});
+if(!Object.keys(f).length){toast('No changes to save');c.edit=false;c.render=true}else{const r=await api('cropSave',{crop:c.v.id,f});c.v=r.profile;c.edit=false;c.render=true;toast('Crop profile saved')}}}catch(err){toast(err.message);if(S.cp&&!S.cp.v)S.cp=null}
+cpView()});
+document.addEventListener('change',async e=>{if(e.target.id!='cp-pick'||!S.cp)return;try{await cpLoad(e.target.value)}catch(err){toast(err.message)}cpView()});
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.cp){S.cp=null;cpView()}});
 (async()=>{if(IS_DEMO){all();return}
 [BAYS,BEDS,C,P,EX,S.tasks].forEach(a=>a.length=0);
 try{const sv=JSON.parse(sessionStorage.getItem('gh')||'null');if(sv){S.tok=sv.tok;S.user=sv.user}}catch(x){}

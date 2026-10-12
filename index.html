@@ -225,7 +225,7 @@ box.innerHTML=`<div class="row sp"><b style="font-size:16px">Season planning</b>
 <div id="gres">${g.res?genRes(g.res):''}</div>`;genStatus()}
 function drawGenView(){const o=el('ov2'),g=S.gen;o.style.display=g?'flex':'none';if(g&&g.render){g.render=false;drawGen();if(g.fresh){g.fresh=false;const x=el('g-year');if(x)x.focus()}}}
 document.addEventListener('click',async e=>{const pl0=el('pl');if(pl0)S.psc=pl0.scrollTop;const t=e.target.closest('[data-a],[data-f],[data-v],[data-b],[data-t],[data-c]');if(!t)return;const D=t.dataset,b=S.sel,c=b&&cohortOf(b);
-if(D.f)S.filt=D.f;else if(D.v)S.view=D.v;else if(D.b){S.sel=D.b;S.queue=false;S.tab='Overview';S.picked=[]}else if(D.t)S.tab=D.t;else if(D.c)S.cat=D.c;
+if(D.f)S.filt=D.f;else if(D.v)S.view=D.v;else if(D.b){S.sel=D.b;S.queue=false;S.tab='Overview';S.picked=[];S.cat='ALL'}else if(D.t)S.tab=D.t;else if(D.c)S.cat=D.c;
 else try{switch(D.a){case'close':S.sel=null;S.queue=false;break;case'queue':S.queue=true;break;case'theme':document.documentElement.dataset.theme=document.documentElement.dataset.theme=='dark'?'light':'dark';break;
 case'login':if(IS_DEMO){S.user=!S.user;toast(S.user?'Logged in':'Logged out')}else{S.tok=null;S.user=null;S.needLogin=true;try{sessionStorage.removeItem('gh')}catch(x){}}break;
 case'dologin':{const r=await api('login',{user:el('lu').value,pin:el('lp').value});S.tok=r.token;S.user=r.user;S.needLogin=false;el('lp').value='';try{sessionStorage.setItem('gh',JSON.stringify({tok:r.token,user:r.user}))}catch(x){}await load();break}

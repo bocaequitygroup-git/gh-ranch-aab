@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>GH_ranch_aab - Activity Assignment Board</title>
 <style>
@@ -212,7 +213,7 @@ if(S.tab=='Overview')h+=planHist(b,st);
 if(S.tab=='Activity'){const post=st=='POST_HARVEST',f=flow(b),lock=false,av=ACTS.filter(a=>applies(a,BEDS.find(x=>x.id==b))),cats=[...new Set(av.map(a=>a.group))],
 opts=ACTS.filter(a=>(S.cat=='ALL'||S.cat==a.group)&&!S.picked.some(p=>p.act==a.name)),nAll=av.length,
 wc=w=>{const n=S.tasks.filter(t=>t.w==w.id&&t.st!='DONE').length;return n+' open'};
-h+=`<div class="row sp"><span class="mu">Updated ${S.upd||'-'}</span><button class="btn o" data-a="refresh">Refresh</button></div>
+h+=`<div class="row sp"><span class="mu">Updated ${S.upd||'-'} - board build 2026-10-12 16:50</span><button class="btn o" data-a="refresh">Refresh</button></div>
 ${flowCard(b)}<div class="card"><div class="row sp"><b>Assign worker(s)</b><span class="mu">${S.crew.size} selected</span></div><div class="row">${WORKERS.map(w=>`<label><input type="checkbox" data-a="wk" data-i="${esc(w.id)}" ${S.crew.has(w.id)?'checked':''}> ${esc(w.name)} <span class="mu">${wc(w).startsWith('0')?'free':wc(w)}</span></label>`).join('')}</div>
 <div class="row"><button class="chip" data-a="allw">Select all workers</button><button class="chip" data-a="clrw">Clear workers</button></div>
 <div class="mu" style="margin-top:6px">Date</div><div class="row">${[['Today',0],['Tomorrow',1]].map(([l,o])=>`<button class="chip ${S.when==o?'on':''}" data-a="when" data-i="${o}">${l}</button>`).join('')}</div></div>

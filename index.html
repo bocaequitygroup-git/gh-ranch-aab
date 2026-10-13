@@ -53,31 +53,58 @@ select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;p
 .cpback{display:none}
 @media(max-width:700px){#ov3 .card{width:100vw;height:100%;border-radius:0}.cpw{grid-template-columns:1fr}.cpw.sel .cpl{display:none}.cpw:not(.sel) .cpd{display:none}.cpback{display:inline-block}.cpl{border-right:0}.cpd{padding:12px 14px 24px}}
 
-/* propagation calendar */
-.pctitle{min-width:150px;text-align:center;font-size:16px}.pcg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--ln);border:1px solid var(--ln);border-radius:8px;overflow:hidden}
-.pcgh{background:var(--bg);text-align:center;font-size:11px;font-weight:700;color:var(--mu);padding:4px 0}
-.pcc{background:var(--pn);min-height:92px;padding:3px;display:flex;flex-direction:column;gap:2px;text-align:left;border:0;cursor:pointer;color:var(--tx);min-width:0}.pcc.out{background:var(--bg);cursor:default}.pcc:hover{background:var(--av)}
-.pcc.sel{outline:2px solid var(--ac);outline-offset:-2px}.pcc.today .pcn{background:var(--ac);color:#fff;border-radius:99px}.pcn{font-size:12px;font-weight:600;align-self:flex-start;min-width:20px;height:20px;line-height:20px;text-align:center}
-.pcch{display:block;color:#fff;font-size:11px;line-height:1.3;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pcch.late{outline:2px solid #B3261E;outline-offset:-1px;font-weight:700}
-.pcmore{font-size:11px;color:var(--mu)}.pcdots{display:none;gap:2px;flex-wrap:wrap}.pcdots i{width:7px;height:7px;border-radius:50%;display:block}.pcev{padding:6px 0;border-top:1px solid var(--ln);margin-top:6px}
-@media(max-width:700px){.pcc{min-height:54px}.pcch,.pcmore{display:none}.pcdots{display:flex}.pctitle{min-width:0}}
+/* GCAL:CSS-START - each page sets --g-pn --g-bg --g-tx --g-mu --g-ln --g-ac --g-av on .gcal (see the page's own :root mapping) */
+.gcal{color:var(--g-tx);font:inherit;--tc:#2E7D32}
+.gctabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 6px}
+.gctab{position:relative;text-align:left;border:2px solid var(--g-ln);border-left:8px solid var(--tc);background:var(--g-pn);color:var(--g-tx);border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:1px;min-width:0;cursor:pointer;font:inherit}
+.gctab b{font-size:1.08em}.gctab .gcsub{font-size:.84em;color:var(--g-mu)}
+.gctab[aria-selected=true]{background:var(--tc);border-color:var(--tc);color:#fff}.gctab[aria-selected=true] .gcsub{color:#ffffffe0}
+.gcbad{position:absolute;top:6px;right:8px;font-style:normal;font-size:.72em;font-weight:700;background:#B3261E;color:#fff;border-radius:99px;padding:1px 7px;border:1px solid #fff8}
+.gcblurb{font-size:.86em;color:var(--g-mu);margin:0 2px 8px}
+.gctb{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}.gcsp{flex:1}
+.gcseg{display:inline-flex;border:1px solid var(--g-ln);border-radius:8px;overflow:hidden}
+.gcseg button{border:0;background:var(--g-pn);padding:6px 14px;cursor:pointer;color:var(--g-tx);min-height:34px;font:inherit}.gcseg button.on{background:var(--tc);color:#fff;font-weight:700}
+.gcchip{border:1px solid var(--g-ln);background:var(--g-pn);border-radius:99px;padding:4px 12px;cursor:pointer;font:inherit;font-size:.88em;color:var(--g-tx);min-height:32px}.gcchip.on{color:#fff;border-color:transparent;font-weight:700}
+.gcbtn{border:1px solid var(--g-ac);background:transparent;color:var(--g-ac);border-radius:7px;padding:5px 11px;cursor:pointer;min-height:34px;font:inherit;font-weight:700}
+.gcsel{border:1px solid var(--g-ln);background:var(--g-pn);color:var(--g-tx);border-radius:7px;padding:5px 8px;min-height:34px;font:inherit}
+.gcbn{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:.92em;border:1px solid}
+.gcbn.bad{background:rgba(179,38,30,.13);border-color:#B3261E}.gcbn.ok{background:rgba(46,125,50,.15);border-color:#2E7D32}
+.gcnav{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin:4px 0 8px}.gcrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.gcttl{min-width:150px;text-align:center;font-size:1.1em}.gcmu{font-size:.88em;color:var(--g-mu)}
+.gcg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--g-ln);border:1px solid var(--g-ln);border-radius:8px;overflow:hidden}
+.gcgh{background:var(--g-bg);text-align:center;font-size:.78em;font-weight:700;color:var(--g-mu);padding:4px 0}
+.gccell{background:var(--g-pn);min-height:84px;padding:3px;display:flex;flex-direction:column;gap:2px;text-align:left;border:0;cursor:pointer;color:var(--g-tx);min-width:0;font:inherit}
+.gccell.out{background:var(--g-bg);cursor:default}.gccell:hover:not(.out){background:var(--g-av)}
+.gccell.sel{outline:2px solid var(--tc);outline-offset:-2px}.gccell.today .gcn{background:var(--tc);color:#fff;border-radius:99px}
+.gcn{font-size:.82em;font-weight:700;align-self:flex-start;min-width:20px;height:20px;line-height:20px;text-align:center}
+.gcch{display:block;color:#fff;font-size:.76em;line-height:1.35;padding:1px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcch.late{outline:2px solid #B3261E;outline-offset:-1px;font-weight:700}.gcch.done{opacity:.5}
+.gcmore{font-size:.74em;color:var(--g-mu)}.gcdots{display:none;gap:2px;flex-wrap:wrap}.gcdots i{width:7px;height:7px;border-radius:50%;display:block}
+.gcdet{margin-top:10px;border:1px solid var(--g-ln);border-radius:8px;padding:10px 12px;background:var(--g-pn)}
+.gcwk{background:var(--g-bg);margin:12px 0 0;padding:5px 10px;font-size:.8em;font-weight:700;color:var(--g-mu);border-radius:6px}
+.gcr{display:grid;grid-template-columns:116px minmax(0,1fr);gap:4px 12px;padding:9px 4px;border-bottom:1px solid var(--g-ln)}.gcr.nd{grid-template-columns:1fr;padding:8px 0;border-bottom:0;border-top:1px solid var(--g-ln);margin-top:8px}
+.gcrd b{display:block}.gcrd span{font-size:.82em;color:var(--g-mu)}
+.gctag{display:inline-block;color:#fff;font-size:.76em;font-weight:700;padding:2px 8px;border-radius:99px;margin-right:6px;vertical-align:1px}
+.gcm{font-size:.86em;color:var(--g-mu);margin-top:2px}.gcx{color:var(--g-mu);font-weight:600}
+.gcem{padding:26px 16px;text-align:center;color:var(--g-mu);border:2px dashed var(--g-ln);border-radius:8px}
+.gcnote{font-size:.8em;color:var(--g-mu);margin-top:12px}
+@media(max-width:700px){.gccell{min-height:50px}.gcch,.gcmore{display:none}.gcdots{display:flex}.gcttl{min-width:0}.gctab{padding:7px 8px;border-left-width:6px}.gctab .gcsub{font-size:.76em}.gcbad{position:static;align-self:flex-start;margin-top:3px}.gcr{grid-template-columns:1fr}}
+/* GCAL:CSS-END */
 
-#ov4 .card{width:min(1040px,96vw);height:min(88vh,860px);padding:0;gap:0;display:flex;flex-direction:column;overflow:hidden}
-.pct{padding:10px 16px;border-bottom:1px solid var(--ln);display:grid;gap:8px}.pcb{flex:1;overflow:auto;padding:0 16px 20px}
-.pcw{position:sticky;top:0;background:var(--bg);margin:0 -16px;padding:5px 16px;font-size:12px;font-weight:700;color:var(--mu);z-index:1}
-.pcr{display:grid;grid-template-columns:104px minmax(150px,1fr) 2.4fr;gap:6px 14px;padding:9px 0;border-bottom:1px solid var(--ln);font-size:13px;align-items:start}
-@media(max-width:700px){#ov4 .card{width:100vw;height:100%;border-radius:0}.pcr{grid-template-columns:1fr 1fr}.pcr>:last-child{grid-column:1/-1}}
-.pcbar{display:flex;height:9px;border-radius:5px;overflow:hidden;margin-top:6px;background:var(--av)}.pcbar i{display:block;min-width:2px}
-.pcleg{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--mu)}.pcleg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+/* production calendars: modal shell + page colour mapping */
+.gcal{--g-pn:var(--pn);--g-bg:var(--bg);--g-tx:var(--tx);--g-mu:var(--mu);--g-ln:var(--ln);--g-ac:var(--ac);--g-av:var(--av)}
+#ov4 .card{width:min(1100px,96vw);height:min(90vh,900px);padding:0;gap:0;display:flex;flex-direction:column;overflow:hidden}
+.pct{padding:10px 16px;border-bottom:1px solid var(--ln);display:grid;gap:8px}.pcb{flex:1;overflow:auto;padding:12px 16px 20px}
+@media(max-width:700px){#ov4 .card{width:100vw;height:100%;border-radius:0}}
 @media print{#ov4.open{position:static!important;background:none!important;display:block!important}#ov4.open .card{border:0!important;height:auto!important;overflow:visible!important;width:100%!important}#ov4.open .pcb{overflow:visible!important}}
 </style></head><body>
 <nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
-<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Propagation calendar</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
 <main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
 <svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
 <div class="ov" id="ov"><div class="card"><b>Sign in</b><select id="lu"></select><input id="lp" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" data-a="dologin">Log in</button><span class="mu">Managers and owners only.</span></div></div>
 <div class="ov" id="ov2"><div class="card" role="dialog" aria-modal="true" aria-label="Season planning"></div></div>
-<div class="ov" id="ov4"><div class="card" role="dialog" aria-modal="true" aria-label="Propagation calendar"></div></div>
+<div class="ov" id="ov4"><div class="card" role="dialog" aria-modal="true" aria-label="Production calendars"></div></div>
 <div class="ov" id="ov3"><div class="card" role="dialog" aria-modal="true" aria-label="Crop profile"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
@@ -435,6 +462,141 @@ if(S.tok){try{await load()}catch(err){toast(err.message)}}else S.needLogin=true;
 all()})();
 </script>
 <script>
+/* GCAL:START - shared production calendars (Propagation / Planting / Harvest). Same block lives in gh_ranch_aab.html and gh_dashboard.html. */
+const GCAL=(()=>{
+const CALS={
+ prop:{name:'Propagation',blurb:'Nursery sowing and harden-off',c:'#2E7D32',types:['sow','harden'],main:['sow','harden']},
+ plant:{name:'Planting',blurb:'Transplants out to beds, and crops that go straight into the bed (seed, slips, cuttings, crowns)',c:'#1F6FB2',types:['plant','direct'],main:['plant','direct']},
+ harv:{name:'Harvest',blurb:'First-harvest windows',c:'#B3571B',types:['ready','close'],main:['ready']}};
+const TY={
+ sow:{l:'Sow in nursery',s:'Sow',p:'nursery sowings',c:'#2E7D32'},
+ harden:{l:'Start harden-off',s:'Harden',p:'harden-offs',c:'#8F5F00'},
+ plant:{l:'Plant out',s:'Plant',p:'plant-outs',c:'#1F6FB2'},
+ direct:{l:'Direct to bed',s:'Direct',p:'direct plantings',c:'#5B3FA8'},
+ ready:{l:'Harvest window opens',s:'Harvest',p:'windows opening',c:'#B3571B'},
+ close:{l:'Harvest window closes',s:'Last day',p:'windows closing',c:'#7A3E14'}};
+const ORDER=Object.keys(TY),CALKEYS=Object.keys(CALS);
+const calOf=t=>CALKEYS.find(k=>CALS[k].types.includes(t));
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const add=(s,n)=>{const x=new Date(s+'T00:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)};
+const fmt=(s,o)=>s?new Date(s+'T00:00:00Z').toLocaleDateString('en-US',Object.assign({month:'short',day:'numeric',year:'numeric',timeZone:'UTC'},o||{})):'-';
+const wkStart=s=>add(s,-new Date(s+'T00:00:00Z').getUTCDay());
+const shiftM=(m,k)=>new Date(Date.UTC(+m.slice(0,4),+m.slice(5,7)-1+k,1)).toISOString().slice(0,7);
+const waveOf=e=>e.wave||((String(e.id||'').match(/W(\d+)$/)||[])[1]|0)||0;
+const uniq=a=>[...new Set(a.filter(Boolean))];
+const defBay=b=>String(b||'').split('-').slice(0,2).join('-');
+
+function create(cfg){
+ const st={tab:null,bay:'ALL',t:{}},today=()=>cfg.today(),bayOf=cfg.bayOf||defBay;
+ let host=null,focus=null;
+ const ts=k=>st.t[k]||(st.t[k]={view:'month',mon:null,day:'',range:null,off:k=='harv'?{close:true}:{}});
+ const late=e=>!e.done&&(e.t=='sow'||e.t=='harden'||e.t=='plant'||e.t=='direct')&&e.d<today();
+ const nowOpen=e=>e.t=='ready'&&!e.done&&e.d<=today()&&(!e.he||e.he>=today());
+ const missed=e=>e.t=='ready'&&!e.done&&e.he&&e.he<today();
+ const evAll=()=>(cfg.events()||[]).filter(e=>e&&e.d&&TY[e.t]&&(st.bay=='ALL'||bayOf(e.bed)==st.bay));
+ const evCal=(all,k)=>all.filter(e=>calOf(e.t)==k);
+ const vis=(evs,T)=>evs.filter(e=>!T.off[e.t]);
+ const sorter=(a,b)=>a.d<b.d?-1:a.d>b.d?1:ORDER.indexOf(a.t)-ORDER.indexOf(b.t)||(a.crop<b.crop?-1:a.crop>b.crop?1:waveOf(a)-waveOf(b));
+ function groups(evs){const m={},o=[];evs.slice().sort(sorter).forEach(e=>{const k=e.d+'|'+e.t+'|'+e.crop;if(!m[k]){m[k]=[];o.push(m[k])}m[k].push(e)});return o}
+
+ /* ---- which range / month to open on ---- */
+ function ranges(k,evs){const t=today(),r=[],o=evs.filter(late).length,n=evs.filter(nowOpen).length;
+  const up=lim=>evs.filter(e=>e.d>=t&&e.d<=lim);
+  if(k=='harv'&&n)r.push(['now','Open now',n]);if(k!='harv'&&o)r.push(['over','Overdue',o]);
+  r.push(['14','Next 14 days',up(add(t,14)).length],['30','Next 30 days',up(add(t,30)).length],['90','Next 90 days',up(add(t,90)).length],['all','All upcoming',up('9999-12-31').length],['past','Last 30 days',evs.filter(e=>e.d<t&&e.d>=add(t,-30)).length]);return r}
+ function rangeEvs(T,evs){const t=today(),r=T.range;
+  if(r=='over')return evs.filter(late);if(r=='now')return evs.filter(nowOpen);
+  if(r=='past')return evs.filter(e=>e.d<t&&e.d>=add(t,-30));
+  const lim=r=='all'?'9999-12-31':add(t,+r);return evs.filter(e=>e.d>=t&&e.d<=lim)}
+ function initTab(k,evs){const T=ts(k),t=today();
+  if(!T.range){const rs=ranges(k,evs);T.range=(rs.find(x=>x[0]=='over'||x[0]=='now')||rs.find(x=>['30','90','all'].includes(x[0])&&x[2]>0)||rs[1])[0]}
+  if(!T.mon){const tm=t.slice(0,7),ms=uniq(evs.map(e=>e.d.slice(0,7))).sort();T.mon=ms.includes(tm)?tm:(ms.find(m=>m>tm)||ms[ms.length-1]||tm)}
+  const inM=evs.filter(e=>e.d.slice(0,7)==T.mon).map(e=>e.d).sort();
+  if(!T.day||T.day.slice(0,7)!=T.mon)T.day=t.slice(0,7)==T.mon?t:(inM[0]||T.mon+'-01')}
+ function pickTab(all){const t=today(),w=add(t,7);
+  for(const k of CALKEYS)if(evCal(all,k).some(e=>late(e)||nowOpen(e)))return k;
+  for(const k of CALKEYS)if(evCal(all,k).some(e=>!e.done&&CALS[k].main.includes(e.t)&&e.d>=t&&e.d<=w))return k;
+  for(const k of CALKEYS)if(evCal(all,k).some(e=>!e.done&&e.d>=t))return k;return'prop'}
+
+ /* ---- rendering pieces ---- */
+ function tabs(all){const t=today(),w=add(t,7);
+  return `<div class="gctabs" role="tablist" aria-label="Production calendars">${CALKEYS.map(k=>{const c=CALS[k],ev=evCal(all,k),main=ev.filter(e=>c.main.includes(e.t)&&!e.done),o=ev.filter(late).length,n=ev.filter(nowOpen).length,wk=main.filter(e=>e.d>=t&&e.d<=w).length,nx=main.filter(e=>e.d>=t).sort(sorter)[0];
+   const sub=k=='harv'&&n?n+' open now':wk?wk+' in next 7 days':nx?'Next: '+fmt(nx.d,{year:undefined}):ev.length?'All done':'Nothing scheduled';
+   return `<button class="gctab" role="tab" aria-selected="${st.tab==k}" data-g="tab" data-v="${k}" style="--tc:${c.c}"><b>${c.name}</b><span class="gcsub">${esc(sub)}</span>${o?`<i class="gcbad">${o} overdue</i>`:''}</button>`}).join('')}</div>`}
+ function toolbar(k,T,evs){const c=CALS[k];
+  const view=`<span class="gcseg" role="group" aria-label="View"><button data-g="view" data-v="month" class="${T.view=='month'?'on':''}" aria-pressed="${T.view=='month'}">Month</button><button data-g="view" data-v="list" class="${T.view=='list'?'on':''}" aria-pressed="${T.view=='list'}">Agenda</button></span>`;
+  const chips=c.types.map(t=>`<button class="gcchip ${T.off[t]?'':'on'}" data-g="ty" data-v="${t}" aria-pressed="${!T.off[t]}" style="${T.off[t]?'':`background:${TY[t].c}`}">${TY[t].l}</button>`).join('');
+  const bl=typeof cfg.bays=='function'?cfg.bays():cfg.bays,bays=bl&&bl.length>1?`<select class="gcsel" id="gc-bay" aria-label="Bay"><option value="ALL">All bays</option>${bl.map(b=>`<option value="${esc(b[0])}" ${st.bay==b[0]?'selected':''}>${esc(b[1])}</option>`).join('')}</select>`:'';
+  return `<div class="gctb">${view}${chips}${bays}<span class="gcsp"></span><button class="gcbtn" data-g="csv">Download CSV</button>${cfg.print?'<button class="gcbtn" data-g="print">Print</button>':''}</div>`}
+ function banners(k,evs){let h='';const o=evs.filter(late).length,n=evs.filter(nowOpen).length,m=evs.filter(missed).length;
+  if(o)h+=`<div class="gcbn bad"><span><b>${o}</b> ${k=='prop'?'nursery task'+(o==1?' is':'s are'):'planting'+(o==1?' is':'s are')} overdue.</span><button class="gcbtn" data-g="goto" data-v="over">Show overdue</button></div>`;
+  if(n)h+=`<div class="gcbn ok"><span><b>${n}</b> cohort${n==1?' is':'s are'} inside the harvest window right now.</span><button class="gcbtn" data-g="goto" data-v="now">Show open now</button></div>`;
+  if(m)h+=`<div class="gcbn bad"><span><b>${m}</b> cohort${m==1?' has':'s have'} passed the end of the harvest window without being marked complete.</span></div>`;
+  return h}
+ const flags=e=>(late(e)?'<span class="gctag" style="background:#B3261E">Overdue</span>':'')+(nowOpen(e)?'<span class="gctag" style="background:#2E7D32">Open now</span>':'')+(missed(e)?'<span class="gctag" style="background:#B3261E">Window passed</span>':'')+(e.done&&!missed(e)?'<span class="gctag" style="background:#7C8B98">Done</span>':'')+(e.proposed?'<span class="gctag" style="background:#E0A526;color:#12201a">Proposed</span>':'');
+ function meta(e){const bed=e.bed?'Bed '+esc(e.bed):'Bed TBD',p=[];
+  if(e.t=='sow'){p.push('plant out '+fmt(e.dob));if(e.hard&&e.hard!=e.dob)p.push('harden-off '+fmt(e.hard))}
+  else if(e.t=='harden'){p.push('plant out '+fmt(e.dob));if(e.sow)p.push('sown '+fmt(e.sow))}
+  else if(e.t=='plant'){p.push(e.sow?'sown in nursery '+fmt(e.sow):'');if(e.hs)p.push('harvest opens '+fmt(e.hs))}
+  else if(e.t=='direct'){p.push('no nursery');if(e.hs)p.push('harvest opens '+fmt(e.hs))}
+  else{p.push('window '+fmt(e.hs)+(e.he&&e.he!=e.hs?' to '+fmt(e.he):''));p.push((e.done?'planted ':'planting ')+fmt(e.dob))}
+  return [bed].concat(p.filter(Boolean)).join(' &middot; ')}
+ function row(g,exp,showDate){const e=g[0],n=g.length,ws=uniq(g.map(x=>waveOf(x)?'W'+waveOf(x):'')),beds=uniq(g.map(x=>x.bed));
+  const who=`<b>${esc(e.crop)}</b>${n==1?(ws[0]?' '+ws[0]:''):' <span class="gcx">&times;'+n+(ws.length?' ('+ws.join(', ')+')':'')+'</span>'}`;
+  const m=n==1?esc(e.id)+' &middot; '+meta(e):(beds.length?'Beds: '+esc(beds.slice(0,6).join(', '))+(beds.length>6?' +'+(beds.length-6)+' more':''):'Beds TBD')+(exp?'':' &middot; open the day for details');
+  const sub=exp&&n>1?g.map(x=>`<div class="gcm">${esc(x.id)} &middot; ${meta(x)}</div>`).join(''):'';
+  return `<div class="gcr${showDate?'':' nd'}">${showDate?`<div class="gcrd"><b>${fmt(e.d,{weekday:'short',month:'short',day:'numeric',year:undefined})}</b><span>${e.d.slice(0,4)}</span></div>`:''}<div><span class="gctag" style="background:${TY[e.t].c}">${TY[e.t].l}</span>${who} ${flags(e)}<div class="gcm">${m}</div>${sub}</div></div>`}
+
+ /* ---- month view ---- */
+ function month(k,T,evs,all){const f=vis(evs,T),by={};f.forEach(e=>(by[e.d]=by[e.d]||[]).push(e));
+  const y=+T.mon.slice(0,4),mo=+T.mon.slice(5,7)-1,first=new Date(Date.UTC(y,mo,1)),lead=first.getUTCDay(),dim=new Date(Date.UTC(y,mo+1,0)).getUTCDate(),weeks=Math.ceil((lead+dim)/7),t=today();
+  const title=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'}),inM=f.filter(e=>e.d.slice(0,7)==T.mon);
+  const sum=CALS[k].types.filter(x=>!T.off[x]).map(x=>{const n=inM.filter(e=>e.t==x).length;return n+' '+TY[x].p}).join(' &middot; ');
+  let h=`<div class="gcnav"><div class="gcrow"><button class="gcbtn" data-g="prev" aria-label="Previous month">&lsaquo;</button><b class="gcttl" aria-live="polite">${title}</b><button class="gcbtn" data-g="next" aria-label="Next month">&rsaquo;</button><button class="gcbtn" data-g="today">Today</button><input type="month" class="gcsel" id="gc-mon" value="${T.mon}" aria-label="Jump to month"></div><div class="gcmu">${sum}</div></div>`;
+  h+=`<div class="gcg" role="grid" aria-label="${title}">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="gcgh" role="columnheader">${x}</div>`).join('')}`;
+  for(let i=0;i<weeks*7;i++){const n=i-lead+1;if(n<1||n>dim){h+='<div class="gccell out"></div>';continue}
+   const ds=T.mon+'-'+String(n).padStart(2,'0'),gs=groups(by[ds]||[]),cnt=(by[ds]||[]).length;
+   h+=`<button class="gccell${ds==t?' today':''}${ds==T.day?' sel':''}" data-g="day" data-v="${ds}" role="gridcell" aria-label="${fmt(ds)}, ${cnt} event${cnt==1?'':'s'}"><span class="gcn">${n}</span>${gs.slice(0,2).map(g=>{const e=g[0],lt=g.some(late),dn=g.every(x=>x.done);return `<span class="gcch${lt?' late':''}${dn?' done':''}" style="background:${TY[e.t].c}">${lt?'! ':''}${TY[e.t].s} ${esc(e.crop)}${g.length>1?' &times;'+g.length:waveOf(e)?' W'+waveOf(e):''}</span>`}).join('')}${gs.length>2?`<span class="gcmore">+${gs.length-2} more</span>`:''}<span class="gcdots">${gs.slice(0,6).map(g=>`<i style="background:${TY[g[0].t].c}"></i>`).join('')}</span></button>`}
+  h+='</div>';
+  const de=groups(by[T.day]||[]);
+  h+=`<div class="gcdet"><b>${fmt(T.day,{weekday:'long'})}</b>${T.day==t?' <span class="gctag" style="background:#2E7D32">Today</span>':''}${de.length?de.map(g=>row(g,true,false)).join(''):'<div class="gcm" style="margin-top:6px">Nothing scheduled on this day.</div>'}</div>`;
+  return h}
+
+ /* ---- agenda view ---- */
+ function agenda(k,T,evs){const rs=ranges(k,evs);if(!rs.some(x=>x[0]==T.range))T.range=rs[1][0];
+  const chips=rs.map(r=>`<button class="gcchip ${T.range==r[0]?'on':''}" data-g="range" data-v="${r[0]}" aria-pressed="${T.range==r[0]}" style="${T.range==r[0]?`background:${CALS[k].c}`:''}">${r[1]} (${r[2]})</button>`).join('');
+  const list=rangeEvs(T,vis(evs,T));let wk='',h='';
+  groups(list).forEach(g=>{const w=wkStart(g[0].d);if(w!=wk){wk=w;h+=`<div class="gcwk">Week of ${fmt(w)}</div>`}h+=row(g,false,true)});
+  return `<div class="gctb">${chips}</div>`+(h||'<div class="gcem">Nothing in this range. Try <b>All upcoming</b>.</div>')}
+
+ function render(){if(!host)return;const all=evAll();
+  if(!all.length){host.innerHTML=`<div class="gcal"><div class="gcem">No dated cohorts yet. Calendars fill in as soon as planting dates are available.</div></div>`;return}
+  if(!st.tab)st.tab=pickTab(all);const k=st.tab,T=ts(k),evs=evCal(all,k);initTab(k,evs);
+  let body;try{body=banners(k,evs)+(T.view=='month'?month(k,T,evs,all):agenda(k,T,evs))}catch(err){console.error(err);body=`<div class="gcbn bad">The calendar could not be drawn: ${esc(err.message)}</div>`}
+  host.innerHTML=`<div class="gcal" style="--tc:${CALS[k].c}">${tabs(all)}<div class="gcblurb">${esc(CALS[k].blurb)}</div>${toolbar(k,T,evs)}${body}${cfg.note?`<div class="gcnote">${cfg.note()}</div>`:''}</div>`;
+  if(focus){const q=focus.id?'#'+focus.id:'[data-g="'+focus.a+'"]'+(focus.v?'[data-v="'+focus.v+'"]':''),n=host.querySelector(q);if(n)try{n.focus({preventScroll:true})}catch(e){}focus=null}}
+
+ function csv(){const all=evAll(),k=st.tab||'prop',q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',rows=evCal(all,k).slice().sort(sorter);
+  const lines=[['Calendar','Date','Event','Crop','Wave','Cohort','Bed','Status'].map(q).join(',')];
+  rows.forEach(e=>lines.push([CALS[k].name,e.d,TY[e.t].l,e.crop,waveOf(e)||'',e.id,e.bed,late(e)?'Overdue':nowOpen(e)?'Open now':e.done?'Done':e.proposed?'Proposed':'Scheduled'].map(q).join(',')));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));a.download=CALS[k].name.toLowerCase()+'_calendar_'+today()+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+
+ function onClick(ev){const n=ev.target.closest('[data-g]');if(!n||!host||!host.contains(n))return;const a=n.dataset.g,v=n.dataset.v;
+  if(a=='csv'){csv();return}if(a=='print'){window.print();return}
+  const k=st.tab,T=ts(k);focus={a,v};
+  if(a=='tab'){st.tab=v}else if(a=='view'){T.view=v}else if(a=='ty'){T.off[v]=!T.off[v]}
+  else if(a=='prev'){T.mon=shiftM(T.mon,-1);T.day=''}else if(a=='next'){T.mon=shiftM(T.mon,1);T.day=''}
+  else if(a=='today'){T.mon=today().slice(0,7);T.day=today()}else if(a=='day'){T.day=v}
+  else if(a=='range'){T.range=v}else if(a=='goto'){T.view='list';T.range=v;focus=null}
+  render()}
+ function onChange(ev){const t=ev.target;if(!host||!host.contains(t))return;
+  if(t.id=='gc-bay'){st.bay=t.value;Object.keys(st.t).forEach(k=>{st.t[k].range=null;st.t[k].mon=null;st.t[k].day=''});focus={id:'gc-bay'};render()}
+  else if(t.id=='gc-mon'&&/^\d{4}-\d{2}$/.test(t.value)){const T=ts(st.tab);T.mon=t.value;T.day='';focus={id:'gc-mon'};render()}}
+ return{mount(el){host=el;el.addEventListener('click',onClick);el.addEventListener('change',onChange);render()},render,reset(){st.tab=null;st.t={}}}
+}
+return{create}
+})();
+/* GCAL:END */
 /* ---- Propagation calendar: DOB is the anchor. Start = DOB - pre-DOB days; harvest-ready = DOB + days to first harvest ---- */
 const PCP={"MCH-GH":{"germ":5,"nurs":0,"hard":0,"est":7,"pre":0,"min":30,"max":45,"m":"DIRECT_SEED","n":"Mchicha"},"SUK-GH":{"germ":4,"nurs":28,"hard":7,"est":14,"pre":39,"min":50,"max":70,"m":"SEED->TRANSPLANT","n":"Sukuma Wiki"},"MUS-GH":{"germ":4,"nurs":0,"hard":0,"est":5,"pre":0,"min":35,"max":45,"m":"DIRECT_SEED","n":"Mustard Greens"},"CHD-GH":{"germ":6,"nurs":28,"hard":7,"est":14,"pre":41,"min":45,"max":60,"m":"SEED->TRANSPLANT","n":"Swiss Chard"},"CPL-GH":{"germ":4,"nurs":0,"hard":0,"est":7,"pre":0,"min":40,"max":60,"m":"DIRECT_SEED","n":"Cowpea Leaves"},"SPD-GH":{"germ":7,"nurs":0,"hard":0,"est":7,"pre":0,"min":30,"max":50,"m":"DIRECT_SEED","n":"Spider Plant"},"BTL-GH":{"germ":7,"nurs":35,"hard":7,"est":21,"pre":49,"min":60,"max":60,"m":"CUTTING","n":"Bitter Leaf"},"UGW-GH":{"germ":7,"nurs":49,"hard":7,"est":14,"pre":63,"min":60,"max":90,"m":"SEED->TRANSPLANT","n":"Ugwu"},"LET-GH":{"germ":5,"nurs":28,"hard":7,"est":10,"pre":40,"min":45,"max":60,"m":"SEED->TRANSPLANT","n":"Lettuce"},"KAL-GH":{"germ":5,"nurs":35,"hard":7,"est":14,"pre":47,"min":55,"max":75,"m":"SEED->TRANSPLANT","n":"Kale"},"SPI-GH":{"germ":5,"nurs":0,"hard":0,"est":7,"pre":0,"min":35,"max":45,"m":"DIRECT_SEED","n":"Spinach"},"BRO-GH":{"germ":4,"nurs":42,"hard":7,"est":14,"pre":53,"min":60,"max":80,"m":"SEED->TRANSPLANT","n":"Broccoli"},"CAU-GH":{"germ":4,"nurs":42,"hard":7,"est":14,"pre":53,"min":60,"max":80,"m":"SEED->TRANSPLANT","n":"Cauliflower"},"CAB-GH":{"germ":4,"nurs":42,"hard":7,"est":14,"pre":53,"min":70,"max":90,"m":"SEED->TRANSPLANT","n":"Cabbage"},"COL-GH":{"germ":4,"nurs":35,"hard":7,"est":14,"pre":46,"min":60,"max":80,"m":"SEED->TRANSPLANT","n":"Collard Greens"},"AFE-GH":{"germ":8,"nurs":63,"hard":7,"est":14,"pre":78,"min":75,"max":90,"m":"SEED->TRANSPLANT","n":"African Eggplant"},"EGG-GH":{"germ":5,"nurs":63,"hard":7,"est":14,"pre":75,"min":70,"max":85,"m":"SEED->TRANSPLANT","n":"Eggplant"},"TOM-GH":{"germ":5,"nurs":63,"hard":7,"est":14,"pre":75,"min":60,"max":80,"m":"SEED->TRANSPLANT","n":"Tomatoes"},"OKR-GH":{"germ":5,"nurs":35,"hard":3,"est":14,"pre":43,"min":55,"max":75,"m":"SEED->TRANSPLANT","n":"Okra"},"CUC-GH":{"germ":5,"nurs":21,"hard":3,"est":10,"pre":29,"min":50,"max":65,"m":"SEED->TRANSPLANT","n":"Cucumber"},"SB-GH":{"germ":14,"nurs":63,"hard":7,"est":14,"pre":84,"min":80,"max":90,"m":"SEED->TRANSPLANT","n":"Scotch Bonnet"},"HAB-GH":{"germ":14,"nurs":63,"hard":7,"est":14,"pre":84,"min":80,"max":90,"m":"SEED->TRANSPLANT","n":"Habanero"},"BEC-GH":{"germ":14,"nurs":63,"hard":7,"est":14,"pre":84,"min":75,"max":85,"m":"SEED->TRANSPLANT","n":"Bird\u2019s Eye Chili"},"PEP-GH":{"germ":14,"nurs":63,"hard":7,"est":14,"pre":84,"min":65,"max":75,"m":"SEED->TRANSPLANT","n":"Peppers"},"BEL-GH":{"germ":14,"nurs":63,"hard":7,"est":14,"pre":84,"min":65,"max":75,"m":"SEED->TRANSPLANT","n":"Bell Pepper"},"CAR-GH":{"germ":7,"nurs":0,"hard":0,"est":10,"pre":0,"min":65,"max":80,"m":"DIRECT_SEED","n":"Carrots"},"BET-GH":{"germ":5,"nurs":0,"hard":0,"est":10,"pre":0,"min":55,"max":70,"m":"DIRECT_SEED","n":"Beets"},"TUR-GH":{"germ":4,"nurs":0,"hard":0,"est":7,"pre":0,"min":40,"max":55,"m":"DIRECT_SEED","n":"Turnips"},"ONI-GH":{"germ":7,"nurs":77,"hard":7,"est":14,"pre":91,"min":90,"max":120,"m":"SEED / PLUGS / SETS","n":"Onions"},"SP-GH":{"germ":0,"nurs":0,"hard":0,"est":14,"pre":0,"min":100,"max":120,"m":"SLIP","n":"Sweet Potatoes"},"TY-GH":{"germ":0,"nurs":0,"hard":0,"est":21,"pre":0,"min":240,"max":300,"m":"TUBER_SETT","n":"True Yams"},"CAS-GH":{"germ":0,"nurs":0,"hard":0,"est":21,"pre":0,"min":270,"max":365,"m":"STEM_CUTTING","n":"Cassava"},"PLN-GH":{"germ":0,"nurs":0,"hard":0,"est":30,"pre":0,"min":365,"max":540,"m":"SUCKER / CORM","n":"Plantains"},"ASP-GH":{"germ":0,"nurs":0,"hard":0,"est":30,"pre":0,"min":730,"max":730,"m":"PERENNIAL_CROWN","n":"Asparagus"},"AMG-GH":{"germ":5,"nurs":0,"hard":0,"est":10,"pre":0,"min":90,"max":120,"m":"DIRECT_SEED","n":"Amaranth Grain"},"CPG-GH":{"germ":5,"nurs":0,"hard":0,"est":10,"pre":0,"min":90,"max":120,"m":"DIRECT_SEED","n":"Cowpea Grain"},"BKW-GH":{"germ":3,"nurs":0,"hard":0,"est":7,"pre":0,"min":30,"max":45,"m":"DIRECT_SEED","n":"Buckwheat"},"CLV-GH":{"germ":0,"nurs":0,"hard":0,"est":0,"pre":0,"min":45,"max":60,"m":"DIRECT_SEED","n":"Clover"},"RYE-GH":{"germ":0,"nurs":0,"hard":0,"est":0,"pre":0,"min":180,"max":240,"m":"DIRECT_SEED","n":"Rye"},"VET-GH":{"germ":0,"nurs":0,"hard":0,"est":0,"pre":0,"min":180,"max":240,"m":"DIRECT_SEED","n":"Vetch"}};
 const PCC={nur:'#8FBF8A',har:'#D8CFAE',est:'#5B8FC9',gro:'#B7C4BA',hv:'#2E7D32'},PCDONE=['GROWING','HARVEST_READY','HARVEST_COMPLETE','TERMINATED'];
@@ -463,62 +625,21 @@ out.push(pcRow(pl.id,(c&&c.crop)||(x&&x.crop)||'',(c&&c.bed)||(x&&x.rec)||pl.bay
 C.forEach(c=>{if(seen.has(c.id))return;seen.add(c.id);if(pcOk(c.dob))out.push(pcRow(c.id,c.crop,c.bed,c.dob,PCDONE.includes(c.stage),c.stage,c.hs,c.he));else{pcSkip++;pcSample=pcSample||JSON.stringify(c.dob)}});
 P.forEach(x=>{if(seen.has(x.id))return;seen.add(x.id);if(pcOk(x.date))out.push(pcRow(x.id,x.crop,x.rec,x.date,false,'PROPOSED'));else{pcSkip++;pcSample=pcSample||JSON.stringify(x.date)}});
 return out.sort((a,b)=>a.start<b.start?-1:a.start>b.start?1:a.id<b.id?-1:1)}
-function pcStatus(r){const t=d(0);if(r.planted)return['Planted','#7C8B98'];const lead=r.pre>0?'Start':'Plant';if(r.start<t)return[lead+' overdue','#B3261E'];if(r.start<=pcAdd(t,7))return['Due this week','#C77700'];if(r.start<=pcAdd(t,30))return['Next 30 days','#5B8FC9'];return['Upcoming','#7C8B98']}
-function pcFilter(rows){const f=S.pc,t=d(0);return rows.filter(r=>{if(f.bay!='ALL'&&!String(r.bed).startsWith(f.bay))return false;if(f.nur&&!(r.pre>0))return false;
-if(f.rng=='done')return r.planted;if(r.planted)return false;if(f.rng=='act')return r.start<=pcAdd(t,14);if(f.rng=='90')return r.start<=pcAdd(t,90);return true})}
-function pcBar(r){const p=r.p;if(!p||p.min==null)return'';const nur=Math.max(0,r.pre-p.hard),seg=[[nur,PCC.nur,'Germination + nursery '+nur+'d'],[r.pre>0?p.hard:0,PCC.har,'Harden-off '+p.hard+'d'],[p.est,PCC.est,'Establishment '+p.est+'d'],[Math.max(0,p.min-p.est),PCC.gro,'Growing'],[Math.max(1,(p.max||p.min)-p.min),PCC.hv,'Harvest window']].filter(s=>s[0]>0);
-return `<div class="pcbar" role="img" aria-label="Phase timeline from propagation start to latest harvest">${seg.map(s=>`<i style="flex:${s[0]} 1 0;background:${s[1]}" title="${esc(s[2])}"></i>`).join('')}</div>`}
-function pcRowHtml(r){const [st,col]=pcStatus(r),p=r.p;
-const steps=!p?'<span class="mu">Lead times not on file for this crop.</span>':(r.pre>0?`<b>Sow</b> ${pcFmt(r.start)} &rarr; germinated ${pcFmt(r.germ)} &rarr; <b>harden off</b> ${pcFmt(r.hard)} &rarr; <b>plant out (DOB)</b> ${pcFmt(r.dob)}`:`<b>${r.planted?'Planted':'Sow in bed'} (DOB)</b> ${pcFmt(r.dob)} <span class="mu">direct, no nursery</span>`)+(r.hs?`<br><b>Harvest-ready</b> ${pcFmt(r.hs)}${r.he&&r.he!=r.hs?' to '+pcFmt(r.he):''}`:'');
-return `<div class="pcr"><div><b style="font-size:14px">${pcFmt(r.start)}</b><br><span class="tag" style="background:${col}">${st}</span></div><div><b>${esc(r.crop)}</b>${r.stage=='PROPOSED'?' <span class="tag" style="background:#E0A526;color:#12201a">Proposed</span>':''}<div class="mu">${esc(r.id)}<br>Bed ${esc(r.bed||'-')}${p&&r.pre>0?' &middot; '+r.pre+' days before DOB':''}</div></div><div>${steps}${pcBar(r)}</div></div>`}
-const PCT={sow:{l:'Sow in nursery',s:'Sow',c:'#2E7D32'},direct:{l:'Direct sow in bed',s:'Sow',c:'#1F6FB2'},plant:{l:'Plant out (DOB)',s:'Plant',c:'#5B8FC9'},harden:{l:'Start harden-off',s:'Harden',c:'#A9780B'},harvest:{l:'Harvest ready',s:'Harvest',c:'#B3571B'}};
-function pcBase(rows){const f=S.pc;return rows.filter(r=>(f.bay=='ALL'||String(r.bed).startsWith(f.bay))&&(!f.nur||r.pre>0))}
-function pcEvents(rows){const ev=[];rows.forEach(r=>{if(r.pre>0){ev.push({d:r.start,t:'sow',r});if(r.hard)ev.push({d:r.hard,t:'harden',r});ev.push({d:r.dob,t:'plant',r})}else ev.push({d:r.dob,t:'direct',r});if(r.hs)ev.push({d:r.hs,t:'harvest',r})});return ev.filter(e=>e.d&&S.pc.ty[e.t])}
-const pcWave=id=>{const m=String(id).match(/W(\d+)$/);return m?' W'+(+m[1]):''},pcLate=e=>(e.t=='sow'||e.t=='direct')&&!e.r.planted&&e.d<d(0);
-function pcMonthStart(){return S.pc.mon+'-01'}
-function pcCal(rows){const f=S.pc,ev=pcEvents(pcBase(rows)),by={};ev.forEach(e=>(by[e.d]=by[e.d]||[]).push(e));
-const ms=pcMonthStart(),y=+ms.slice(0,4),mo=+ms.slice(5,7)-1,first=new Date(Date.UTC(y,mo,1)),lead=first.getUTCDay(),dim=new Date(Date.UTC(y,mo+1,0)).getUTCDate(),weeks=Math.ceil((lead+dim)/7),today=d(0);
-const title=first.toLocaleDateString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
-const inM=ev.filter(e=>e.d.slice(0,7)==f.mon),cnt=t=>inM.filter(e=>e.t==t).length,late=ev.filter(pcLate).length;
-if(!f.day||f.day.slice(0,7)!=f.mon){const ds=Object.keys(by).filter(k=>k.slice(0,7)==f.mon).sort();f.day=today.slice(0,7)==f.mon?today:(ds[0]||ms)}
-let h=`<div class="row sp" style="margin:8px 0"><div class="row"><button class="btn o" data-a="pcprev" aria-label="Previous month">&lsaquo;</button><b class="pctitle" aria-live="polite">${title}</b><button class="btn o" data-a="pcnext" aria-label="Next month">&rsaquo;</button><button class="btn o" data-a="pctoday">Today</button><input type="month" id="pc-mon" value="${f.mon}" aria-label="Jump to month"></div><div class="mu">${cnt('sow')+cnt('direct')} sowing${cnt('sow')+cnt('direct')==1?'':'s'} &middot; ${cnt('plant')} plant-out${cnt('plant')==1?'':'s'} &middot; ${cnt('harvest')} harvest-ready</div></div>`;
-if(late)h+=`<div class="wn error" style="margin-bottom:8px"><b>${late}</b> sowing${late==1?' is':'s are'} overdue (start date passed, not yet planted). They show in red on the calendar.</div>`;
-h+=`<div class="pcg" role="grid" aria-label="${title}">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(x=>`<div class="pcgh" role="columnheader">${x}</div>`).join('')}`;
-for(let i=0;i<weeks*7;i++){const n=i-lead+1;if(n<1||n>dim){h+='<div class="pcc out"></div>';continue}const k=f.mon+'-'+String(n).padStart(2,'0'),es=(by[k]||[]).sort((a,b)=>'sow,direct,plant,harden,harvest'.indexOf(a.t)-'sow,direct,plant,harden,harvest'.indexOf(b.t));
-h+=`<button class="pcc${k==today?' today':''}${k==f.day?' sel':''}${es.length?' has':''}" data-a="pcday" data-i="${k}" role="gridcell" aria-label="${pcFmt(k)}, ${es.length} event${es.length==1?'':'s'}"><span class="pcn">${n}</span>${es.slice(0,3).map(e=>`<span class="pcch${pcLate(e)?' late':''}" style="background:${PCT[e.t].c}">${pcLate(e)?'! ':''}${PCT[e.t].s} ${esc(e.r.crop)}${pcWave(e.r.id)}</span>`).join('')}${es.length>3?`<span class="pcmore">+${es.length-3} more</span>`:''}<span class="pcdots">${es.slice(0,6).map(e=>`<i style="background:${PCT[e.t].c}"></i>`).join('')}</span></button>`}
-h+='</div>';
-const de=(by[f.day]||[]).sort((a,b)=>a.t<b.t?-1:1);
-h+=`<div class="card" style="margin-top:10px"><b>${pcFmt(f.day)}</b>${f.day==today?' <span class="tag" style="background:#2E7D32">Today</span>':''}${de.length?de.map(e=>`<div class="pcev"><span class="tag" style="background:${PCT[e.t].c}">${PCT[e.t].l}</span> <b>${esc(e.r.crop)}${pcWave(e.r.id)}</b>${pcLate(e)?' <span class="tag" style="background:#B3261E">Overdue</span>':''}${e.r.stage=='PROPOSED'?' <span class="tag" style="background:#E0A526;color:#12201a">Proposed</span>':''}<div class="mu">${esc(e.r.id)} &middot; Bed ${esc(e.r.bed||'-')} &middot; DOB ${pcFmt(e.r.dob)}${e.r.pre>0?' &middot; sow '+pcFmt(e.r.start):''}${e.r.hs?' &middot; harvest-ready '+pcFmt(e.r.hs)+(e.r.he&&e.r.he!=e.r.hs?' to '+pcFmt(e.r.he):''):''}</div></div>`).join(''):'<div class="mu" style="margin-top:4px">Nothing scheduled on this day.</div>'}</div>`;
-return h}
-function pcBody(){const f=S.pc,all=pcRows(),t=d(0);let top='',list='',n=0;
-const bay=`<select id="pc-bay" aria-label="Bay"><option value="ALL">All bays</option>${BAYS.map(b=>`<option value="${esc(b[0])}" ${f.bay==b[0]?'selected':''}>${esc(b[1])}</option>`).join('')}</select>`,nur=`<button class="chip ${f.nur?'on':''}" data-a="pcnur" aria-pressed="${f.nur}">Nursery crops only</button>`,
-vt=`<div class="row" style="margin-bottom:6px"><button class="chip ${f.view=='cal'?'on':''}" data-a="pcview" data-i="cal">Calendar</button><button class="chip ${f.view=='list'?'on':''}" data-a="pcview" data-i="list">List</button></div>`;
-if(f.view=='cal'){top=vt+`<div class="row">${Object.keys(PCT).map(k=>`<button class="chip ${f.ty[k]?'on':''}" data-a="pcty" data-i="${k}" aria-pressed="${!!f.ty[k]}" style="${f.ty[k]?`background:${PCT[k].c};border-color:${PCT[k].c}`:''}">${PCT[k].l}</button>`).join('')}${nur}${bay}</div>`;list=pcCal(all);n=pcBase(all).length}
-else{const rows=pcFilter(all),un=all.filter(r=>!r.planted),cnt={act:un.filter(r=>r.start<=pcAdd(t,14)).length,'90':un.filter(r=>r.start<=pcAdd(t,90)).length,all:un.length,done:all.length-un.length},ch=(k,l)=>`<button class="chip ${f.rng==k?'on':''}" data-a="pcrng" data-i="${k}">${l} (${cnt[k]})</button>`;
-top=vt+`<div class="row">${ch('act','Needs action (14 days)')}${ch('90','Next 90 days')}${ch('all','All upcoming')}${ch('done','Already planted')}${nur}${bay}</div><div class="pcleg"><span><i style="background:${PCC.nur}"></i>Germination + nursery</span><span><i style="background:${PCC.har}"></i>Harden-off</span><span><i style="background:${PCC.est}"></i>Establishment (after DOB)</span><span><i style="background:${PCC.gro}"></i>Growing</span><span><i style="background:${PCC.hv}"></i>Harvest window</span></div>`;
-let g='',wk='';rows.forEach(r=>{const w=pcWk(r.start);if(w!=wk){wk=w;g+=`<div class="pcw">Week of ${pcFmt(w)}</div>`}g+=pcRowHtml(r)});list=g||'<p style="padding:24px 0;text-align:center" class="mu">Nothing to show in this view. Try <b>All upcoming</b> or <b>Already planted</b>.</p>';n=rows.length}
-if(!all.length)list=`<div class="wn error" style="margin:14px 0"><b>No cohorts with a readable planting date.</b> The workbook sent ${pcSkip} cohort${pcSkip==1?'':'s'} whose date the app could not read${pcSample?' (first value seen: <code>'+esc(pcSample)+'</code>)':''}. Check Planned_DOB in BED_ASSIGNMENT / COHORT_PRODUCTION.</div>`;
-return{top,list,n}}
-function pcView(){const o=el('ov4');if(!o)return;const f=S.pc;o.style.display=f?'flex':'none';o.classList.toggle('open',!!f);if(!f)return;let b;try{b=pcBody()}catch(err){console.error(err);o.firstElementChild.innerHTML=`<div class="pct"><div class="row sp"><b>Propagation calendar</b><button class="btn o" data-a="pcclose">Close</button></div><div class="wn error">The calendar could not be drawn: ${esc(err.message)}</div></div>`;return}
-o.firstElementChild.innerHTML=`<div class="pct noprint"><div class="row sp"><b style="font-size:15px">Propagation calendar</b><span class="row">${PCLIVE?'':`<button class="btn o" data-a="pcsync" ${IS_DEMO||f.busy?'disabled':''}>${f.busy?'Syncing...':'Sync lead times'}</button>`}<button class="btn o" data-a="pccsv">Download CSV</button><button class="btn o" data-a="pcprint">Print</button><button class="btn o" data-a="pcclose">Close</button></span></div>${b.top}</div><div class="pcb">${b.list}<div class="mu" style="margin-top:12px">DOB = actual planting date. Sow date = DOB minus pre-DOB days (germination + nursery + harden-off); direct-sown crops are sown on their DOB. Harvest-ready = DOB plus days to first harvest. Planting dates: ${PCPLANLIVE?'read live from SEASONAL_PLANNER':'snapshot of SEASONAL_PLANNER (deploy the latest Code_GH.gs to read them live)'}. Lead times: ${PCLIVE||f.synced?'read live from the workbook':'a snapshot from the workbook; press Sync lead times to refresh'}.${pcSkip&&b.n?` ${pcSkip} cohort${pcSkip==1?' has':'s have'} no readable planting date and ${pcSkip==1?'is':'are'} not shown.`:''}</div></div>`}
-function pcCsv(){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',rows=pcFilter(pcRows());
-const lines=[['Cohort','Crop','Bed','Status','Propagation start (sow)','Germination done','Harden-off start','Plant-out / DOB','Harvest-ready earliest','Harvest-ready latest'].map(q).join(',')];
-rows.forEach(r=>lines.push([r.id,r.crop,r.bed,r.stage=='PROPOSED'?'Proposed':r.planted?'Planted':pcStatus(r)[0],r.start,r.germ,r.hard,r.dob,r.hs,r.he].map(q).join(',')));
-const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));a.download='propagation_calendar_'+d(0)+'.csv';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 async function pcSync(){const f=S.pc,ids=[...new Set(pcRows().map(r=>pcCrop(r.id)))];f.busy=true;pcView();let fail=0;
 for(let i=0;i<ids.length;i+=4){await Promise.all(ids.slice(i,i+4).map(async id=>{try{const r=await api('cropProfile',{crop:id});pcSet(r.profile)}catch(e){fail++}}));if(!S.pc)return}
 f.busy=false;f.synced=!fail;pcView();toast(fail?fail+' crop(s) could not be synced; using snapshot for those':'Lead times synced')}
-function pcFirstMonth(){try{const t=d(0),r=pcRows().filter(x=>!x.planted).sort((a,b)=>a.start<b.start?-1:1),up=r.find(x=>x.start>=t)||r[0];return (up?up.start:t).slice(0,7)}catch(e){return d(0).slice(0,7)}}
-const pcShift=(m,k)=>{const x=new Date(Date.UTC(+m.slice(0,4),+m.slice(5,7)-1+k,1));return x.toISOString().slice(0,7)};
-document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t||!/^pc/.test(t.dataset.a))return;const a=t.dataset.a;
-if(a=='pcal'){S.pc={view:'cal',rng:'act',nur:false,bay:'ALL',busy:false,synced:false,ty:{sow:true,direct:true,plant:true,harden:false,harvest:true},mon:d(0).slice(0,7),day:''};S.pc.mon=pcFirstMonth();try{const un=pcRows().filter(r=>!r.planted),tt=d(0);S.pc.rng=un.some(r=>r.start<=pcAdd(tt,14))?'act':un.some(r=>r.start<=pcAdd(tt,90))?'90':un.length?'all':'done'}catch(err){console.error(err)}pcView();return}
-if(!S.pc)return;
-if(a=='pcclose')S.pc=null;else if(a=='pcview')S.pc.view=t.dataset.i;else if(a=='pcrng')S.pc.rng=t.dataset.i;else if(a=='pcnur')S.pc.nur=!S.pc.nur;else if(a=='pcty')S.pc.ty[t.dataset.i]=!S.pc.ty[t.dataset.i];
-else if(a=='pcprev')S.pc.mon=pcShift(S.pc.mon,-1);else if(a=='pcnext')S.pc.mon=pcShift(S.pc.mon,1);else if(a=='pctoday'){S.pc.mon=d(0).slice(0,7);S.pc.day=d(0)}else if(a=='pcday')S.pc.day=t.dataset.i;
-else if(a=='pccsv')pcCsv();else if(a=='pcprint')window.print();else if(a=='pcsync'){pcSync();return}
-pcView()});
-document.addEventListener('change',e=>{if(e.target.id=='pc-mon'&&S.pc&&/^\d{4}-\d{2}$/.test(e.target.value)){S.pc.mon=e.target.value;pcView()}});
-document.addEventListener('change',e=>{if(e.target.id=='pc-bay'&&S.pc){S.pc.bay=e.target.value;pcView()}});
+function pcEv(){const out=[],gl=id=>+((String(id).match(/W(\d+)$/)||[])[1]||0);
+pcRows().forEach(r=>{const b={crop:r.crop,id:r.id,wave:gl(r.id),bed:r.bed,done:!!r.planted,proposed:r.stage=='PROPOSED',dob:r.dob,sow:r.pre>0?r.start:'',hard:r.hard,hs:r.hs,he:r.he||r.hs,pre:r.pre},X=(t,dt,o)=>out.push(Object.assign({},b,{t,d:dt},o||{}));
+if(r.pre>0){X('sow',r.start);if(r.hard&&r.hard!=r.dob)X('harden',r.hard);X('plant',r.dob)}else X('direct',r.dob);
+if(r.hs){const hd=r.stage=='HARVEST_COMPLETE'||r.stage=='TERMINATED';X('ready',r.hs,{done:hd});if(r.he&&r.he!=r.hs)X('close',r.he,{done:hd})}});return out}
+const PCCAL=GCAL.create({events:pcEv,today:()=>d(0),bays:BAYS.map(b=>[b[0],b[1]]),print:true,
+note:()=>`DOB = actual planting date. Sow date = DOB minus pre-DOB days (germination + nursery + harden-off); crops without a nursery go straight into the bed on their DOB. Harvest window = DOB plus days to first harvest (min to max). Planting dates: ${PCPLANLIVE?'read live from SEASONAL_PLANNER':'snapshot of SEASONAL_PLANNER (deploy the latest Code_GH.gs to read them live)'}. Lead times: ${PCLIVE||(S.pc&&S.pc.synced)?'read live from the workbook':'a snapshot from the workbook; press Sync lead times to refresh'}.${pcSkip?` ${pcSkip} cohort${pcSkip==1?' has':'s have'} no readable planting date and ${pcSkip==1?'is':'are'} not shown.`:''}`});
+function pcView(){const o=el('ov4');if(!o)return;const f=S.pc;o.style.display=f?'flex':'none';o.classList.toggle('open',!!f);if(!f)return;
+o.firstElementChild.innerHTML=`<div class="pct noprint"><div class="row sp"><b style="font-size:15px">Production calendars</b><span class="row">${PCLIVE?'':`<button class="btn o" data-a="pcsync" ${IS_DEMO||f.busy?'disabled':''}>${f.busy?'Syncing...':'Sync lead times'}</button>`}<button class="btn o" data-a="pcclose">Close</button></span></div></div><div class="pcb" id="pchost"></div>`;
+PCCAL.mount(el('pchost'))}
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t||!/^pc/.test(t.dataset.a))return;const a=t.dataset.a;
+if(a=='pcal'){S.pc={busy:false,synced:false};PCCAL.reset();pcView();return}
+if(!S.pc)return;if(a=='pcclose')S.pc=null;else if(a=='pcsync'){pcSync();return}pcView()});
 document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.pc){S.pc=null;pcView()}});
 const pcLn=c=>{const p=PCP[pcCrop(c.id)];if(!p||!(p.pre>0))return'';const s=pcAdd(c.dob,-p.pre);return (c.stage=='PRE_PLANTING'?'Propagation start ':'Propagated ')+pcFmt(s)+' ('+p.pre+' days before DOB)<br>'};
 </script></body></html>

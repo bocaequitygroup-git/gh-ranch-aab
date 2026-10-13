@@ -108,7 +108,7 @@ const WR=new Set(['gengo','vready','override','ovrow','ovapply','plant','ready',
 async function load(){const r=await api('load');BAYS.length=BEDS.length=C.length=P.length=0;S.tasks.length=0;
 ACTS.length=0;ACTS.push(...(r.activities||[]));if(!IS_DEMO&&!r.activities)toast('Web app is out of date: redeploy Code_GH.gs as a new version');else if(!IS_DEMO&&!r.activities.length)toast('ACTIVITIES_REFERENCE has no rows with Active = Yes');BAYS.push(...r.bays);BEDS.push(...r.beds);C.push(...r.cohorts);P.push(...r.proposals);S.tasks.push(...r.tasks.map((t,i)=>({...t,i})));
 if(r.workers&&r.workers.length){WORKERS.length=0;WORKERS.push(...r.workers)}
-if(window.pcApply)pcApply(r.prop);HIST.length=0;HIST.push(...(r.history||[]));Object.keys(DONE).forEach(k=>delete DONE[k]);Object.assign(DONE,r.done||{});OVLOG.length=0;OVLOG.push(...(r.ovLog||[]));Object.keys(OVR).forEach(k=>delete OVR[k]);Object.assign(OVR,r.ovr||{});Object.keys(GATES).forEach(k=>delete GATES[k]);(r.gates||[]).forEach(g=>{GATES[g.bed]=g});S.upd=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
+if(window.pcApply)pcApply(r.prop,r.plan);HIST.length=0;HIST.push(...(r.history||[]));Object.keys(DONE).forEach(k=>delete DONE[k]);Object.assign(DONE,r.done||{});OVLOG.length=0;OVLOG.push(...(r.ovLog||[]));Object.keys(OVR).forEach(k=>delete OVR[k]);Object.assign(OVR,r.ovr||{});Object.keys(GATES).forEach(k=>delete GATES[k]);(r.gates||[]).forEach(g=>{GATES[g.bed]=g});S.upd=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
 const cohortOf=b=>C.find(c=>c.bed==b&&c.stage!='TERMINATED'&&c.stage!='HARVEST_COMPLETE')||C.find(c=>c.bed==b);
 const propOf=b=>P.filter(p=>p.rec==b);
 const exOf=b=>EX.filter(e=>e.bed==b&&e.open);
@@ -448,12 +448,20 @@ const pcAdd=(s,n)=>{s=pcD(s);if(!s)return'';const x=new Date(s+'T00:00:00Z');x.s
 const pcDiff=(a,b)=>Math.round((new Date(b+'T00:00:00Z')-new Date(a+'T00:00:00Z'))/864e5);
 const pcFmt=s=>pcD(s)?new Date(pcD(s)+'T00:00:00Z').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}):'-';
 const pcWk=s=>pcAdd(s,-((new Date(pcD(s)+'T00:00:00Z').getUTCDay()+6)%7));
-let PCLIVE=false;function pcApply(m){if(m&&Object.keys(m).length){Object.keys(m).forEach(k=>{PCP[k]=Object.assign({},PCP[k],m[k])});PCLIVE=true}}
+let PCLIVE=false;let PCPLAN=[];function pcApply(m,plan){if(Array.isArray(plan)&&plan.length)PCPLAN=plan;if(m&&Object.keys(m).length){Object.keys(m).forEach(k=>{PCP[k]=Object.assign({},PCP[k],m[k])});PCLIVE=true}}
 const pcCrop=id=>{const m=String(id).match(/^(.+)-\d{4}-W\d+$/);return m?m[1]:id};
 function pcSet(v){if(!v||!v.id)return;const o=PCP[v.id]||{},g=v.germ||0,n=v.nurs||0,h=v.hard||0;PCP[v.id]={germ:g,nurs:n,hard:h,est:v.est||0,pre:v.pre!=null?v.pre:(n>0?g+n+h:0),min:v.fhMin!=null?v.fhMin:o.min,max:v.fhMax!=null?v.fhMax:(v.fhMin!=null?v.fhMin:o.max),m:v.propMethod||o.m||''}}
 function pcRow(id,crop,bed,dob,planted,stage,hs0,he0){dob=pcD(dob);hs0=pcD(hs0);he0=pcD(he0);const k=pcCrop(id),p=PCP[k],pre=p?p.pre:0,hs=hs0||(p&&p.min!=null?pcAdd(dob,p.min):''),he=he0||(p&&p.max!=null?pcAdd(dob,p.max):hs);
 crop=crop||(p&&p.n)||k.replace(/-GH$/,'');return{id,crop,bed,dob,planted,stage,p,pre,start:pcAdd(dob,-pre),hard:p&&pre>0?pcAdd(dob,-p.hard):'',germ:p&&pre>0?pcAdd(pcAdd(dob,-pre),p.germ):'',hs,he}}
-let pcSkip=0,pcSample='';function pcRows(){const r=[];pcSkip=0;pcSample='';C.forEach(c=>{if(pcOk(c.dob))r.push(pcRow(c.id,c.crop,c.bed,c.dob,PCDONE.includes(c.stage),c.stage,c.hs,c.he));else{pcSkip++;pcSample=pcSample||JSON.stringify(c.dob)}});P.forEach(x=>{if(pcOk(x.date))r.push(pcRow(x.id,x.crop,x.rec,x.date,false,'PROPOSED'));else{pcSkip++;pcSample=pcSample||JSON.stringify(x.date)}});return r.sort((a,b)=>a.start<b.start?-1:a.start>b.start?1:a.id<b.id?-1:1)}
+let pcSkip=0,pcSample='';
+function pcRows(){const out=[],seen=new Set(),cm={},pm={};pcSkip=0;pcSample='';C.forEach(c=>cm[c.id]=c);P.forEach(x=>pm[x.id]=x);
+const dobOf=(id,...c)=>{for(const v of c)if(pcOk(v))return pcD(v);return ''};
+PCPLAN.forEach(pl=>{seen.add(pl.id);const c=cm[pl.id],x=pm[pl.id],dob=c?dobOf(pl.id,c.dob,pl.dob):dobOf(pl.id,pl.dob,x&&x.date);
+if(!dob){pcSkip++;pcSample=pcSample||JSON.stringify(pl.dob);return}
+out.push(pcRow(pl.id,(c&&c.crop)||(x&&x.crop)||'',(c&&c.bed)||(x&&x.rec)||pl.bay,dob,!!c&&PCDONE.includes(c.stage),c?c.stage:x?'PROPOSED':'PLANNED',c&&c.hs,c&&c.he))});
+C.forEach(c=>{if(seen.has(c.id))return;seen.add(c.id);if(pcOk(c.dob))out.push(pcRow(c.id,c.crop,c.bed,c.dob,PCDONE.includes(c.stage),c.stage,c.hs,c.he));else{pcSkip++;pcSample=pcSample||JSON.stringify(c.dob)}});
+P.forEach(x=>{if(seen.has(x.id))return;seen.add(x.id);if(pcOk(x.date))out.push(pcRow(x.id,x.crop,x.rec,x.date,false,'PROPOSED'));else{pcSkip++;pcSample=pcSample||JSON.stringify(x.date)}});
+return out.sort((a,b)=>a.start<b.start?-1:a.start>b.start?1:a.id<b.id?-1:1)}
 function pcStatus(r){const t=d(0);if(r.planted)return['Planted','#7C8B98'];const lead=r.pre>0?'Start':'Plant';if(r.start<t)return[lead+' overdue','#B3261E'];if(r.start<=pcAdd(t,7))return['Due this week','#C77700'];if(r.start<=pcAdd(t,30))return['Next 30 days','#5B8FC9'];return['Upcoming','#7C8B98']}
 function pcFilter(rows){const f=S.pc,t=d(0);return rows.filter(r=>{if(f.bay!='ALL'&&!String(r.bed).startsWith(f.bay))return false;if(f.nur&&!(r.pre>0))return false;
 if(f.rng=='done')return r.planted;if(r.planted)return false;if(f.rng=='act')return r.start<=pcAdd(t,14);if(f.rng=='90')return r.start<=pcAdd(t,90);return true})}

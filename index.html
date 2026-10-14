@@ -101,9 +101,14 @@ select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;p
 .pct{padding:10px 16px;border-bottom:1px solid var(--ln);display:grid;gap:8px}.pcb{flex:1;overflow:auto;padding:12px 16px 20px}
 @media(max-width:700px){#ov4 .card{width:100vw;height:100%;border-radius:0}}
 @media print{#ov4.open{position:static!important;background:none!important;display:block!important}#ov4.open .card{border:0!important;height:auto!important;overflow:visible!important;width:100%!important}#ov4.open .pcb{overflow:visible!important}}
+#ov6 .card{width:min(1180px,97vw);height:min(90vh,900px);padding:0;gap:0;display:flex;flex-direction:column;overflow:hidden}.opb{flex:1;overflow:auto;padding:12px 16px 20px}
+.optb{border-collapse:collapse;width:100%;font-size:13px}.optb th{position:sticky;top:-12px;background:var(--pn);text-align:left;font-size:11px;color:var(--mu);padding:6px 6px;border-bottom:2px solid var(--ln);white-space:nowrap;z-index:1}.optb td{padding:5px 6px;border-bottom:1px solid var(--ln);vertical-align:middle}
+.optb input{border:1px solid var(--ln);border-radius:5px;padding:3px 5px;background:var(--pn)}.opd td{background:#e0a52622}.opdet td{background:var(--av)!important;border-bottom:1px solid var(--ln)}.opwv{display:flex;flex-wrap:wrap;gap:6px}.opw{border:1px solid var(--ln);background:var(--pn);border-radius:6px;padding:3px 8px;font-size:12px}
+.optb td[data-k]{white-space:nowrap}.opchip{font-size:11px;padding:2px 8px;border-radius:99px;white-space:nowrap}.opchip.ok{background:#2e7d3233}.opchip.bad{background:#b3261e33;font-weight:600}.opchip.na{background:var(--av);color:var(--mu)}.operr{margin:0 0 8px;padding:6px 10px;border-radius:6px;background:#b3261e22;color:var(--tx)}
+@media(max-width:700px){#ov6 .card{width:100vw;height:100%;border-radius:0}}
 </style></head><body>
 <nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
-<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="tmopen" id="tmb">Team</button><button data-a="lhopen" id="lhb">Labor hours</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="opl" id="opb">Operation planner</button><button data-a="tmopen" id="tmb">Team</button><button data-a="lhopen" id="lhb">Labor hours</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
 <main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
 <svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
 <div class="ov" id="ov"><div class="card"><b>Sign in</b><select id="lu"></select><input id="lp" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" data-a="dologin">Log in</button><span class="mu">Managers and owners only.</span></div></div>
@@ -111,6 +116,7 @@ select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;p
 <div class="ov" id="ov4"><div class="card" role="dialog" aria-modal="true" aria-label="Production calendars"></div></div>
 <div class="ov" id="ov5"><div class="card" role="dialog" aria-modal="true" aria-label="Team and labor hours"></div></div>
 <div class="ov" id="ov3"><div class="card" role="dialog" aria-modal="true" aria-label="Crop profile"></div></div>
+<div class="ov" id="ov6"><div class="card" role="dialog" aria-modal="true" aria-label="Operation planner"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
 const IS_DEMO=!WEB_APP_URL, TIMEOUT=20000;
@@ -153,7 +159,7 @@ if(c)return STAGE[c.stage];return{PROPOSED:'#F6E3B0',UNVERIFIED:'#cfd4d0',AVAILA
 const el=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 function drawTop(){el('net').innerHTML=S.net=='demo'?'Demo mode (no web app URL)':S.net=='wait'?'Connecting...':S.net=='online'?`<span class="dot" style="background:#66bb6a"></span>Connected${S.upd?' - updated '+S.upd:''}`:`<span class="dot" style="background:#ef5350"></span>Not connected${S.err?': '+esc(S.err):''}`;
-el('plb').style.display=canGen()?'':'none';['tmb','lhb'].forEach(x=>{const b=el(x);if(b)b.style.display=S.user&&!IS_DEMO?'':'none'});el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
+el('plb').style.display=canGen()?'':'none';el('opb').style.display=canGen()?'':'none';['tmb','lhb'].forEach(x=>{const b=el(x);if(b)b.style.display=S.user&&!IS_DEMO?'':'none'});el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
 el('tb').innerHTML=['ALL','OCCUPIED','PROPOSED','AVAILABLE','UNVERIFIED','POST_HARVEST','EXCEPTION'].map(f=>`<button class="chip ${S.filt==f?'on':''}" data-f="${f}">${f.replace('_',' ').toLowerCase()}</button>`).join('')+`<button class="btn" data-a="queue">Assignment queue (${P.length})</button>`;
 el('vw').innerHTML=['stage','queue'].map(v=>`<button class="chip ${S.view==v?'on':''}" data-v="${v}">${v=='stage'?'Current stage':'Queue priority'}</button>`).join('');
 const L=S.view=='stage'?Object.entries(STAGE):Object.entries(QCOL);el('lg2').innerHTML=L.map(([k,v])=>`<span><i style="background:${v}"></i>${k.replace('_',' ').toLowerCase()}</span>`).join('')+'<span><i style="background:#E4EDE6;border:1px solid #9bb0a2"></i>available</span><span><i style="background:#C77700;border-radius:50%"></i>required steps open</span>'}
@@ -710,4 +716,51 @@ if(a=='lhq'){const d=new Date(),f=new Date();T.to=lhIso(d);if(+i){f.setDate(d.ge
 if(a=='lhgo'){T.from=el('lh-from').value;T.to=el('lh-to').value;await lhLoad();return}
 if(a=='lhcsv'){if(T.lab&&T.lab.length)lhCsv(T.lab);else toast('Nothing to download');return}
 }catch(err){if(S.tm){S.tm.err=err.message;S.tm.busy=false;tmView()}else toast(err.message)}});
+
+/* ===== Operation planner: planting date, number of waves and interval per crop; sow / harvest / wave dates calculate from the planting date ===== */
+const opNum=v=>v===''||v==null||isNaN(Number(v))?null:Number(v);
+const opOrig=(c,f)=>f=='start'?(c.start||''):f=='waves'?(c.nWaves==null?'':String(c.nWaves)):(c.ovr==null?'':String(c.ovr));
+const opVal=(c,f)=>{const e=S.op.edits[c.id];return e&&f in e?e[f]:opOrig(c,f)};
+function opCalc(c){const m=S.op.maxWaves||12,st=opVal(c,'start'),w=opNum(opVal(c,'waves')),o=opNum(opVal(c,'ovr')),n=pcD(st)&&w>0?Math.min(Math.floor(w),m):0,eff=o>0?Math.floor(o):c.dflt,ws=[];
+for(let k=1;k<=n;k++){const p=pcAdd(st,(k-1)*eff);ws.push({n:k,plant:p,sow:pcAdd(p,-c.lead),harvest:pcAdd(p,c.days||0)})}
+const L=ws[ws.length-1],chk=!c.id?'No crop ID':!n?'Enter date + waves':(c.resume&&L.plant>=c.resume?'Wave after open-field restart':'OK');
+return{n,eff,ws,sow1:ws[0]?ws[0].sow:'',h1:ws[0]?ws[0].harvest:'',lastP:L?L.plant:'',hEnd:L?pcAdd(L.harvest,c.win||0):'',chk}}
+const opChip=t=>`<span class="opchip ${t=='OK'?'ok':/^Wave/.test(t)?'bad':'na'}">${esc(t)}</span>`;
+function opDetail(c,k){if(!k.n)return'<span class="mu">No waves planned yet. Enter a first planting date and a number of waves.</span>';const so=c.lead>0?'Sow ':'Sow &amp; plant ';
+return k.ws.map(w=>`<span class="opw"><b>Wave ${w.n}</b> ${c.lead>0?`Sow ${pcFmt(w.sow)} &rarr; Plant ${pcFmt(w.plant)}`:`Sow &amp; plant ${pcFmt(w.plant)}`} &rarr; Harvest ${pcFmt(w.harvest)}</span>`).join('')}
+function opRow(c){const k=opCalc(c),O=S.op,ro=!O.canEdit,e=O.edits[c.id],mx=O.maxWaves,inp=(f,type,extra)=>`<input data-op="${f}" data-id="${esc(c.id)}" type="${type}" value="${esc(opVal(c,f))}" ${ro?'disabled':''} ${extra||''}>`;
+return`<tbody data-oprow="${esc(c.id)}" class="${e?'opd':''}"><tr><td><b>${esc(c.name)}</b><div class="mu">${esc(c.id)}</div></td><td>${c.days==null?'-':c.days} d</td><td>${c.lead>0?c.lead+' d':'none'}<div class="mu">${esc(c.method)}</div></td>
+<td>${inp('start','date','')}</td><td>${inp('waves','number','min="0" max="'+mx+'" step="1" style="width:62px"')}</td><td>${inp('ovr','number','min="1" max="120" step="1" placeholder="'+c.dflt+'" style="width:72px"')}</td>
+<td data-k="sow1">${k.sow1?pcFmt(k.sow1):'-'}</td><td data-k="h1">${k.h1?pcFmt(k.h1):'-'}</td><td data-k="lastP">${k.lastP?pcFmt(k.lastP):'-'}</td><td data-k="hEnd">${k.hEnd?pcFmt(k.hEnd):'-'}</td><td data-k="chk">${opChip(k.chk)}</td>
+<td><button type="button" class="chip" data-a="optoggle" data-id="${esc(c.id)}" aria-expanded="${O.open.has(c.id)}">${O.open.has(c.id)?'Hide':'Waves'}</button></td></tr>
+<tr class="opdet" ${O.open.has(c.id)?'':'hidden'}><td colspan="12"><div class="opwv" data-k="det">${opDetail(c,k)}</div></td></tr></tbody>`}
+function opPaint(id){const c=S.op.crops.find(x=>x.id==id),tb=document.querySelector(`[data-oprow="${CSS.escape(id)}"]`);if(!c||!tb)return;const k=opCalc(c),f=x=>x?pcFmt(x):'-';
+tb.querySelector('[data-k=sow1]').textContent=f(k.sow1);tb.querySelector('[data-k=h1]').textContent=f(k.h1);tb.querySelector('[data-k=lastP]').textContent=f(k.lastP);tb.querySelector('[data-k=hEnd]').textContent=f(k.hEnd);
+tb.querySelector('[data-k=chk]').innerHTML=opChip(k.chk);tb.querySelector('[data-k=det]').innerHTML=opDetail(c,k);tb.classList.toggle('opd',!!S.op.edits[id])}
+function opHead(){const O=S.op,h=el('ophd');if(!h)return;const n=Object.keys(O.edits).length,pl=O.crops.filter(c=>opCalc(c).n>0).length;
+h.textContent=O.crops.length+' crops, '+pl+' with waves planned'+(n?', '+n+' unsaved change'+(n>1?'s':''):'');const b=el('opsave');if(b){b.disabled=!n||O.busy;b.textContent=O.busy?'Saving...':'Save'+(n?' ('+n+')':'')}}
+function opView(){const o=el('ov6'),O=S.op;if(!o)return;o.style.display=O?'flex':'none';if(!O)return;const q=O.q.toLowerCase();
+o.firstElementChild.innerHTML=`<div class="cpt"><div><b style="font-size:15px">Operation planner</b><div class="mu" id="ophd"></div></div><span class="row"><input type="search" id="opq" placeholder="Find a crop" value="${esc(O.q)}" style="width:150px"><button class="btn" id="opsave" data-a="opsave" disabled>Save</button><button class="btn o" data-a="opreload" ${O.busy?'disabled':''}>Reload</button><button class="btn o" data-a="opclose">Close</button></span></div>
+<div class="opb"><p class="mu" style="margin:0 0 8px">Enter the <b>first planting date</b> and the <b>number of waves</b> (0 to ${O.maxWaves}); leave the interval blank to use the crop's default. Sow (propagation) date = planting date minus the crop's lead days; harvest = planting date plus days to first harvest. These are the same formulas as the Green House Operation tab, which is updated when you press Save.</p>${O.err?`<p class="operr" role="alert">${esc(O.err)}</p>`:''}
+${O.loading?'<p class="mu">Loading...</p>':!O.crops.length?'<p class="mu">No crops found.</p>':`<table class="optb"><thead><tr><th>Crop</th><th>Days to 1st harvest</th><th>Propagation lead</th><th>First planting date</th><th>Waves</th><th>Interval (days)</th><th>First sow</th><th>First harvest</th><th>Last planting</th><th>Last harvest ends</th><th>Check</th><th></th></tr></thead>${O.crops.map(opRow).join('')}</table>`}</div>`;
+document.querySelectorAll('[data-oprow]').forEach(t=>{t.style.display=!q||t.dataset.oprow.toLowerCase().includes(q)||t.firstElementChild.textContent.toLowerCase().includes(q)?'':'none'});opHead()}
+async function opLoad(){const O=S.op;O.loading=true;O.err='';opView();try{const r=await api('ghoLoad');O.crops=r.crops;O.maxWaves=r.maxWaves||12;O.canEdit=!!r.canEdit;O.edits={}}catch(err){O.err=err.message}O.loading=false;opView()}
+async function opSave(){const O=S.op,ids=Object.keys(O.edits);if(!ids.length)return;const rows=[];
+for(const id of ids){const c=O.crops.find(x=>x.id==id),st=opVal(c,'start'),w=opVal(c,'waves'),o=opVal(c,'ovr'),wn=opNum(w),on=opNum(o);
+if(st&&!pcD(st)){O.err=c.name+': planting date is not a valid date';opView();return}
+if(w!==''&&!(Number.isInteger(wn)&&wn>=0&&wn<=O.maxWaves)){O.err=c.name+': waves must be a whole number from 0 to '+O.maxWaves;opView();return}
+if(o!==''&&!(Number.isInteger(on)&&on>=1&&on<=120)){O.err=c.name+': interval must be whole days from 1 to 120 (or blank)';opView();return}
+if(wn>0&&!st){O.err=c.name+': enter a first planting date for '+wn+' wave'+(wn>1?'s':'');opView();return}
+rows.push({id,start:st,waves:w,ovr:o})}
+O.busy=true;O.err='';opHead();try{const r=await api('ghoSave',{rows});O.crops=r.crops;O.edits={};toast('Saved '+rows.length+' crop'+(rows.length>1?'s':'')+' to Green House Operation')}catch(err){O.err=err.message}O.busy=false;opView()}
+function opClose(){const O=S.op;if(O&&Object.keys(O.edits).length&&!confirm('Close without saving your changes?'))return;S.op=null;opView()}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t||!/^op(l|close|save|reload|toggle)$/.test(t.dataset.a))return;const a=t.dataset.a;
+try{if(a=='opl'){if(IS_DEMO){toast('Operation planner needs the connected workbook (demo mode has no data)');return}if(!canGen()){toast('The operation planner is for the Manager role');return}S.op={crops:[],edits:{},open:new Set(),q:'',maxWaves:12,canEdit:false,busy:false,loading:true,err:''};await opLoad();return}
+if(!S.op)return;if(a=='opclose')opClose();else if(a=='opsave')await opSave();else if(a=='opreload'){if(Object.keys(S.op.edits).length&&!confirm('Discard your unsaved changes and reload from the workbook?'))return;await opLoad()}
+else if(a=='optoggle'){const id=t.dataset.id,O=S.op,tb=document.querySelector(`[data-oprow="${CSS.escape(id)}"]`);O.open.has(id)?O.open.delete(id):O.open.add(id);tb.querySelector('.opdet').hidden=!O.open.has(id);t.textContent=O.open.has(id)?'Hide':'Waves';t.setAttribute('aria-expanded',O.open.has(id))}}
+catch(err){toast(err.message)}});
+document.addEventListener('input',e=>{const t=e.target,O=S.op;if(!O)return;if(t.id=='opq'){O.q=t.value;const q=O.q.toLowerCase();document.querySelectorAll('[data-oprow]').forEach(x=>{x.style.display=!q||x.firstElementChild.textContent.toLowerCase().includes(q)?'':'none'});return}
+const f=t.dataset&&t.dataset.op;if(!f)return;const id=t.dataset.id,c=O.crops.find(x=>x.id==id);if(!c)return;const ed=O.edits[id]||(O.edits[id]={});ed[f]=t.value;
+if(['start','waves','ovr'].every(k=>!(k in ed)||ed[k]==opOrig(c,k)))delete O.edits[id];O.err='';opPaint(id);opHead()});
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.op)opClose()});
 </script></body></html>

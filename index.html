@@ -29,6 +29,10 @@ aside h2{font-size:15px;margin:0 0 8px}.card{border:1px solid var(--ln);border-r
 .ov{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:20}.ov .card{background:var(--pn);width:min(340px,92vw);padding:16px;display:grid;gap:10px;margin:0}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
 .gf{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.gf label{display:grid;gap:3px;font-size:12px;color:var(--mu)}.gf input,.gf select{width:100%;color:var(--tx)}
 .crops{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:3px 12px;max-height:190px;overflow:auto;border:1px solid var(--ln);border-radius:6px;padding:6px 8px}.crops label{font-size:13px}
+#ov5 .card{width:min(900px,96vw);max-height:92vh;overflow:auto;align-content:start}
+@media(max-width:700px){#ov5 .card{width:100vw;height:100%;max-height:100%;border-radius:0}}
+.lt{width:100%;border-collapse:collapse;font-size:13px}.lt th,.lt td{padding:5px 8px;border-bottom:1px solid var(--ln);text-align:left}.lt td.n,.lt th.n{text-align:right;font-variant-numeric:tabular-nums}.lt tr.g td{background:var(--av);font-weight:600}.lt tr.t td{font-weight:700;border-top:2px solid var(--ln)}
+.pinbox{border:2px solid #2e7d32;background:var(--av);border-radius:8px;padding:8px 12px}.pinbox b{font-size:22px;letter-spacing:3px}
 #ov2 .card{width:min(800px,96vw);max-height:92vh;overflow:auto;align-content:start}
 .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}.kpi div{border:1px solid var(--ln);border-radius:8px;padding:6px 9px}.kpi b{display:block;font-size:16px;line-height:1.3;white-space:nowrap}
 .wn{border-left:3px solid #C77700;background:var(--av);padding:5px 9px;border-radius:4px;font-size:12px;margin-top:4px}.wn.error{border-color:#b3261e}.wn.info{border-color:var(--ln)}
@@ -99,12 +103,13 @@ select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;p
 @media print{#ov4.open{position:static!important;background:none!important;display:block!important}#ov4.open .card{border:0!important;height:auto!important;overflow:visible!important;width:100%!important}#ov4.open .pcb{overflow:visible!important}}
 </style></head><body>
 <nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
-<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="tmopen" id="tmb">Team</button><button data-a="lhopen" id="lhb">Labor hours</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
 <main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
 <svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
 <div class="ov" id="ov"><div class="card"><b>Sign in</b><select id="lu"></select><input id="lp" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" data-a="dologin">Log in</button><span class="mu">Managers and owners only.</span></div></div>
 <div class="ov" id="ov2"><div class="card" role="dialog" aria-modal="true" aria-label="Season planning"></div></div>
 <div class="ov" id="ov4"><div class="card" role="dialog" aria-modal="true" aria-label="Production calendars"></div></div>
+<div class="ov" id="ov5"><div class="card" role="dialog" aria-modal="true" aria-label="Team and labor hours"></div></div>
 <div class="ov" id="ov3"><div class="card" role="dialog" aria-modal="true" aria-label="Crop profile"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
@@ -148,7 +153,7 @@ if(c)return STAGE[c.stage];return{PROPOSED:'#F6E3B0',UNVERIFIED:'#cfd4d0',AVAILA
 const el=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 function drawTop(){el('net').innerHTML=S.net=='demo'?'Demo mode (no web app URL)':S.net=='wait'?'Connecting...':S.net=='online'?`<span class="dot" style="background:#66bb6a"></span>Connected${S.upd?' - updated '+S.upd:''}`:`<span class="dot" style="background:#ef5350"></span>Not connected${S.err?': '+esc(S.err):''}`;
-el('plb').style.display=canGen()?'':'none';el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
+el('plb').style.display=canGen()?'':'none';['tmb','lhb'].forEach(x=>{const b=el(x);if(b)b.style.display=S.user&&!IS_DEMO?'':'none'});el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
 el('tb').innerHTML=['ALL','OCCUPIED','PROPOSED','AVAILABLE','UNVERIFIED','POST_HARVEST','EXCEPTION'].map(f=>`<button class="chip ${S.filt==f?'on':''}" data-f="${f}">${f.replace('_',' ').toLowerCase()}</button>`).join('')+`<button class="btn" data-a="queue">Assignment queue (${P.length})</button>`;
 el('vw').innerHTML=['stage','queue'].map(v=>`<button class="chip ${S.view==v?'on':''}" data-v="${v}">${v=='stage'?'Current stage':'Queue priority'}</button>`).join('');
 const L=S.view=='stage'?Object.entries(STAGE):Object.entries(QCOL);el('lg2').innerHTML=L.map(([k,v])=>`<span><i style="background:${v}"></i>${k.replace('_',' ').toLowerCase()}</span>`).join('')+'<span><i style="background:#E4EDE6;border:1px solid #9bb0a2"></i>available</span><span><i style="background:#C77700;border-radius:50%"></i>required steps open</span>'}
@@ -642,4 +647,49 @@ if(a=='pcal'){S.pc={busy:false,synced:false};PCCAL.reset();pcView();return}
 if(!S.pc)return;if(a=='pcclose')S.pc=null;else if(a=='pcsync'){pcSync();return}pcView()});
 document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.pc){S.pc=null;pcView()}});
 const pcLn=c=>{const p=PCP[pcCrop(c.id)];if(!p||!(p.pre>0))return'';const s=pcAdd(c.dob,-p.pre);return (c.stage=='PRE_PLANTING'?'Propagation start ':'Propagated ')+pcFmt(s)+' ('+p.pre+' days before DOB)<br>'};
+
+/* ===== Team (add worker / reset PIN) and Labor hours ===== */
+const TMH=m=>{m=Math.round(m||0);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')},TMD=m=>((m||0)/60).toFixed(2);
+const lhIso=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function tmView(){const o=el('ov5'),T=S.tm;if(!o)return;o.style.display=T?'flex':'none';if(!T)return;const box=o.firstElementChild;
+const keep=document.activeElement&&document.activeElement.id,tabs=`<div class="row"><button class="chip ${T.tab=='team'?'on':''}" data-a="tmtab" data-i="team">Team</button><button class="chip ${T.tab=='labor'?'on':''}" data-a="tmtab" data-i="labor">Total labor hours</button></div>`;
+let h=`<div class="row sp"><b style="font-size:16px">${T.tab=='team'?'Team':'Total labor hours'}</b><button class="btn o" data-a="tmclose">Close</button></div>${tabs}`;
+if(T.err)h+=`<div class="wn error">${esc(T.err)}</div>`;
+if(T.tab=='team'){
+if(T.pin)h+=`<div class="pinbox"><div>${esc(T.pin.msg)}</div><div><b>${esc(T.pin.pin)}</b></div><div class="mu">Write it down or give it to the worker now. It is stored scrambled and cannot be shown again.</div><button class="btn o" data-a="tmpinok">Done</button></div>`;
+h+=`<div class="card"><b>Add worker</b><div class="gf"><label>Name<input id="tm-name" placeholder="e.g. Maria Lopez" autocomplete="off"></label><label>Worker ID (optional)<input id="tm-id" placeholder="auto from name" autocomplete="off" autocapitalize="none"></label><label>PIN (optional, 4-8 digits)<input id="tm-pin" inputmode="numeric" placeholder="blank = generate" autocomplete="off"></label></div><div class="row"><button class="btn" data-a="tmadd" ${T.busy?'disabled':''}>Add worker</button></div></div>`;
+h+=T.list?`<table class="lt"><thead><tr><th>Name</th><th>ID</th><th>Role</th><th>Status</th><th>PIN</th><th></th></tr></thead><tbody>${T.list.map((u,i)=>`<tr><td>${esc(u.name||'')}</td><td>${esc(u.id)}</td><td>${esc(u.role||'')}</td><td>${esc(u.status||'')}</td><td class="mu">${u.ownPin?'Own PIN':'Shared PIN'}</td><td><button class="chip" data-a="tmreset" data-i="${i}" ${T.busy?'disabled':''}>Reset PIN</button></td></tr>`).join('')}</tbody></table>`:'<div class="mu">Loading...</div>';
+}else{
+const L=T.lab;
+h+=`<div class="row"><label class="mu">From <input type="date" id="lh-from" value="${T.from}"></label><label class="mu">To <input type="date" id="lh-to" value="${T.to}"></label><button class="chip" data-a="lhgo">Show</button><button class="chip" data-a="lhq" data-i="7">Last 7 days</button><button class="chip" data-a="lhq" data-i="30">Last 30 days</button><button class="chip" data-a="lhq" data-i="0">All time</button></div>
+<div class="row">${[['w','By worker'],['a','By activity'],['s','All sessions']].map(([k,l])=>`<button class="chip ${T.lv==k?'on':''}" data-a="lhv" data-i="${k}">${l}</button>`).join('')}<button class="chip" data-a="lhcsv">Download CSV</button></div>`;
+if(!L)h+='<div class="mu">Loading...</div>';else if(!L.length)h+='<div class="mu">No work sessions in this range.</div>';else h+=lhTable(L,T.lv);
+}
+box.innerHTML=h;if(keep&&el(keep))el(keep).focus()}
+function lhGroup(L,k1,k2){const g={};L.forEach(r=>{const a=g[r[k1]]=g[r[k1]]||{key:r[k1],name:r.name,min:0,n:0,kids:{}};a.min+=r.min;a.n++;const c=a.kids[r[k2]]=a.kids[r[k2]]||{key:r[k2],name:r.name,min:0,n:0};c.min+=r.min;c.n++});return Object.values(g).sort((x,y)=>y.min-x.min)}
+function lhTable(L,v){const tot=L.reduce((a,r)=>a+r.min,0),run=L.filter(r=>r.open).length,foot=`<tr class="t"><td>Total</td><td class="n">${L.length}</td><td class="n">${TMH(tot)}</td><td class="n">${TMD(tot)}</td></tr>`;
+const hd=c=>`<thead><tr><th>${c}</th><th class="n">Sessions</th><th class="n">Hours (h:mm)</th><th class="n">Hours (decimal)</th></tr></thead>`,note=run?`<div class="mu">${run} session${run>1?'s are':' is'} still running; time so far is included, breaks excluded.</div>`:'';
+if(v=='s')return `<div style="overflow-x:auto"><table class="lt"><thead><tr><th>Date</th><th>Worker</th><th>Bed</th><th>Activity</th><th class="n">Hours (h:mm)</th><th class="n">Decimal</th><th>Status</th></tr></thead><tbody>${L.map(r=>`<tr><td>${new Date(r.start).toLocaleDateString()}</td><td>${esc(r.name)}</td><td>${esc(r.bed||'')}</td><td>${esc(r.act)}</td><td class="n">${TMH(r.min)}</td><td class="n">${TMD(r.min)}</td><td>${r.open?(r.onBreak?'On break':'Running'):r.verified?'Verified':'Completed'}</td></tr>`).join('')}<tr class="t"><td colspan="4">Total</td><td class="n">${TMH(tot)}</td><td class="n">${TMD(tot)}</td><td></td></tr></tbody></table></div>${note}`;
+const byW=v=='w',G=byW?lhGroup(L.map(r=>({...r,k1:r.worker,k2:r.act})),'k1','k2'):lhGroup(L.map(r=>({...r,k1:r.act,k2:r.worker})),'k1','k2');
+const nm=k=>{const r=L.find(x=>x.worker==k);return r?r.name:k};
+return `<div style="overflow-x:auto"><table class="lt">${hd(byW?'Worker / activity':'Activity / worker')}<tbody>${G.map(g=>`<tr class="g"><td>${esc(byW?nm(g.key):g.key)}</td><td class="n">${g.n}</td><td class="n">${TMH(g.min)}</td><td class="n">${TMD(g.min)}</td></tr>${Object.values(g.kids).sort((x,y)=>y.min-x.min).map(c=>`<tr><td style="padding-left:22px">${esc(byW?c.key:nm(c.key))}</td><td class="n">${c.n}</td><td class="n">${TMH(c.min)}</td><td class="n">${TMD(c.min)}</td></tr>`).join('')}`).join('')}${foot}</tbody></table></div>${note}`}
+async function lhLoad(){const T=S.tm;T.lab=null;T.err='';tmView();try{const r=await api('laborHours',{from:T.from,to:T.to});T.lab=r.labor||[]}catch(e){T.lab=[];T.err=e.message}tmView()}
+async function tmLoad(){const T=S.tm;try{const r=await api('workersList');T.list=r.team||[]}catch(e){T.list=[];T.err=e.message}tmView()}
+function lhCsv(L){const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"',rows=[['Date','Worker ID','Worker','Bed','Activity','Minutes','Hours','Status']].concat(L.map(r=>[new Date(r.start).toLocaleDateString(),r.worker,r.name,r.bed||'',r.act,r.min,TMD(r.min),r.open?'Running':'Completed']));
+const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(q).join(',')).join('\n')],{type:'text/csv'}));a.download='labor_hours_'+lhIso(new Date())+'.csv';document.body.appendChild(a);a.click();a.remove()}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t||!/^(tm|lh)/.test(t.dataset.a))return;const a=t.dataset.a,i=t.dataset.i,T=S.tm;
+try{if(a=='tmopen'||a=='lhopen'){if(IS_DEMO){toast('Needs the connected workbook (demo mode has no data)');return}const d=new Date(),f=new Date();f.setDate(d.getDate()-6);S.tm={tab:a=='tmopen'?'team':'labor',list:null,lab:null,lv:'w',from:lhIso(f),to:lhIso(d),pin:null,err:'',busy:false};tmView();if(a=='tmopen')await tmLoad();else await lhLoad();return}
+if(!T)return;
+if(a=='tmclose'){S.tm=null;tmView();return}
+if(a=='tmtab'){T.tab=i;T.err='';tmView();if(i=='team'&&!T.list)await tmLoad();if(i=='labor'&&!T.lab)await lhLoad();return}
+if(a=='tmpinok'){T.pin=null;tmView();return}
+if(a=='tmadd'){const name=el('tm-name').value.trim(),id=el('tm-id').value.trim(),pin=el('tm-pin').value.trim();T.err='';if(!name){T.err='Enter the worker\'s name';tmView();return}T.busy=true;tmView();
+try{const r=await api('addWorker',{name,id,pin});T.pin={pin:r.pin,msg:'Added '+r.worker.name+'. Worker ID: '+r.worker.id+'. PIN:'};await load();await tmLoad()}catch(err){T.err=err.message}T.busy=false;tmView();return}
+if(a=='tmreset'){const u=T.list[+i],pin=prompt('Reset PIN for '+u.name+' ('+u.id+').\n\nEnter a new PIN of 4 to 8 digits, or leave blank to generate one:');if(pin===null)return;T.err='';T.busy=true;tmView();
+try{const r=await api('resetPin',{worker:u.id,pin:pin.trim()});T.pin={pin:r.pin,msg:'New PIN for '+u.name+' ('+u.id+'):'};await tmLoad()}catch(err){T.err=err.message}T.busy=false;tmView();return}
+if(a=='lhv'){T.lv=i;tmView();return}
+if(a=='lhq'){const d=new Date(),f=new Date();T.to=lhIso(d);if(+i){f.setDate(d.getDate()-(+i-1));T.from=lhIso(f)}else T.from='';await lhLoad();return}
+if(a=='lhgo'){T.from=el('lh-from').value;T.to=el('lh-to').value;await lhLoad();return}
+if(a=='lhcsv'){if(T.lab&&T.lab.length)lhCsv(T.lab);else toast('Nothing to download');return}
+}catch(err){if(S.tm){S.tm.err=err.message;S.tm.busy=false;tmView()}else toast(err.message)}});
 </script></body></html>

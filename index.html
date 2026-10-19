@@ -36,6 +36,7 @@ aside h2{font-size:15px;margin:0 0 8px}.card{border:1px solid var(--ln);border-r
 #ov2 .card{width:min(800px,96vw);max-height:92vh;overflow:auto;align-content:start}
 .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}.kpi div{border:1px solid var(--ln);border-radius:8px;padding:6px 9px}.kpi b{display:block;font-size:16px;line-height:1.3;white-space:nowrap}
 .wn{border-left:3px solid #C77700;background:var(--av);padding:5px 9px;border-radius:4px;font-size:12px;margin-top:4px}.wn.error{border-color:#b3261e}.wn.info{border-color:var(--ln)}
+.bpl{display:flex;gap:4px;align-items:center;margin:2px 0}.bpl select{max-width:170px}.bpn{color:var(--ac);font-weight:600}.bpr{color:#b3261e;font-weight:600}
 .gt{width:100%;border-collapse:collapse;font-size:12px}.gt th,.gt td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--ln);vertical-align:top}.gt th{color:var(--mu);font-weight:600}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--hd);color:#fff;padding:8px 14px;border-radius:8px;z-index:30}
@@ -327,6 +328,7 @@ ${r.warnings.filter(w=>w.level!='info').map(w=>`<div class="wn ${w.level}">&#988
 <div class="mu">Next: open the assignment queue, approve or change each proposed bed, then the nursery team verifies planting on the ground.</div>
 <div class="row"><button class="btn" data-a="genq">Open assignment queue (${P.length})</button><button class="btn o" data-a="genclose">Close</button></div>`}
 function drawGen(){const g=S.gen,box=el('ov2').firstElementChild,f=g.form;
+if(g.tab=='bed'){box.innerHTML=drawBed();bpStat();return}
 if(g.tab=='yield'){box.innerHTML=drawYield();yStatus();return}
 if(g.done){box.innerHTML=genDone(g.done);return}
 box.innerHTML=`<div class="row sp"><b style="font-size:16px">Season planning</b><button class="btn o" data-a="genclose">Close</button></div>${gTabs()}
@@ -389,7 +391,7 @@ document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.gen&&!S.gen.busy){
 /* ---- Plan by yield (Manager only): targets -> sow/transplant dates, nursery trays, proposed beds -> printable proposal ---- */
 const yF=n=>n==null?'-':Number(n).toLocaleString();
 function yInit(){const g=S.gen;return g.y||(g.y={year:g.init.defaults.year,turn:g.init.yield.turnaround,over:10,cells:128,rows:[],res:null,payload:null,done:null})}
-function gTabs(){const g=S.gen,t=(k,l)=>`<button class="chip ${(g.tab||'wave')==k?'on':''}" data-a="gtab" data-i="${k}">${l}</button>`;return `<div class="row noprint" style="margin:6px 0">${t('wave','Wave plan')}${t('yield','Plan by yield')}</div>`}
+function gTabs(){const g=S.gen,t=(k,l)=>`<button class="chip ${(g.tab||'wave')==k?'on':''}" data-a="gtab" data-i="${k}">${l}</button>`;return `<div class="row noprint" style="margin:6px 0">${t('wave','Wave plan')}${t('yield','Plan by yield')}${t('bed','Bed plan sheet')}</div>`}
 function yAdd(id){const g=S.gen,y=yInit(),c=g.init.yield.crops.find(x=>x.id==id);if(!c||y.rows.some(r=>r.id==id))return;y.rows.push({id,name:c.name,method:c.method,by:'season',amount:'',rate:c.rate||'',plants:c.plants||'',waves:g.init.defaults.waves,interval:c.interval,first:c.base?y.year+c.base.slice(4):''})}
 function ySync(){const g=S.gen;if(!g||!g.y)return;const y=g.y;document.querySelectorAll('#ov2 [data-y]').forEach(x=>{const k=x.dataset.y,i=x.dataset.i;if(i===undefined)y[k]=x.value;else if(y.rows[+i])y.rows[+i][k]=x.value})}
 function yStatus(){const g=S.gen,y=g.y,go=el('ygo');if(!go)return;go.disabled=g.busy||!(y.res&&!y.res.blocked&&y.res.summary.cohorts>0);el('yprev').disabled=g.busy||!y.rows.length;el('ypr').disabled=!y.res}
@@ -426,6 +428,108 @@ else if(a=='yprev'){if(g.busy)return;const p=yRead();if(!p)return;g.busy=true;co
 else if(a=='ygo'){const y=g.y;if(g.busy||!y.res||y.res.blocked||!y.payload)return;if(!confirm('Write '+y.res.summary.cohorts+' cohorts for '+y.res.summary.year+' to the Seasonal Planner, Cohort Production and the Assignment queue? All three are saved together or not at all.'))return;
 g.busy=true;try{y.done=await api('yieldGenerate',y.payload);try{await load()}catch(x){}}finally{g.busy=false;g.render=true}}}catch(err){toast(err.message)}all()});
 document.addEventListener('input',e=>{const t=e.target;if(S.gen&&S.gen.tab=='yield'&&S.gen.y&&t.dataset&&t.dataset.y!==undefined){ySync();yLive();yDirty()}});
+/* ---- Bed plan sheet (Manager only): one layout, any bay. Fill the sheet, Preview (writes nothing), then Deploy ---- */
+function bpShift(s,k){if(!k||!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return s;const p=s.split('-').map(Number),last=new Date(Date.UTC(p[0]+k,p[1],0)).getUTCDate();return String(p[0]+k)+'-'+String(p[1]).padStart(2,'0')+'-'+String(Math.min(p[2],last)).padStart(2,'0')}
+const bpBay=()=>{const bp=S.gen.bp;return bp.init.bays.find(b=>b.id==bp.bay)||{id:bp.bay,name:'',beds:[]}};
+const bpKey=(b,c,d)=>b+'|'+c+'|'+d;
+function bpCropOpts(sel){const bp=S.gen.bp;return '<option value="">— empty —</option>'+bp.init.crops.map(c=>`<option value="${esc(c.id)}" ${c.id==sel?'selected':''}>${esc(c.name)}${c.type=='PERMANENT'?' (permanent)':''}</option>`).join('')}
+async function bpLoadCur(){const bp=S.gen.bp,y=bp.year,b=bp.bay,r=await api('bedPlanLoad',{year:y,bay:b});if(bp.year==y&&bp.bay==b)bp.cur=r.beds||{}}
+async function bpCopy(srcBay,srcYear){const bp=S.gen.bp,same=srcBay==bp.bay&&srcYear==bp.year,r=same?{beds:bp.cur}:await api('bedPlanLoad',{year:srcYear,bay:srcBay}),
+src=bp.init.bays.find(b=>b.id==srcBay),k=bp.year-srcYear;bp.rows={};let n=0,perm=0,multi=0;
+(src?src.beds:[]).forEach(b=>{const its=((r.beds||{})[b.id]||[]).filter(x=>{if(x.type=='PERMANENT'&&!same){perm++;return false}return true});if(!its.length)return;n++;if(its.length>1)multi++;bp.rows[b.no]=its.map(x=>({crop:x.crop,date:same?x.date:bpShift(x.date,k)}))});
+bp.res=null;bp.payload=null;bp.done=null;bp.msg='Layout copied from '+srcBay+' '+srcYear+' ('+n+' bed'+(n==1?'':'s')+' with crops'+(multi?', '+multi+' with more than one planting':'')+').'+(perm?' '+perm+' permanent planting'+(perm>1?'s were':' was')+' not copied.':'')+(k?' Dates moved by '+k+' year'+(Math.abs(k)>1?'s':'')+'.':'')}
+async function bpOpen(){const g=S.gen;if(g.bp)return;const bp=g.bp={loading:true,err:''};g.render=true;all();
+try{const i=await api('bedPlanInit'),b0=i.bays[0]?i.bays[0].id:'';Object.assign(bp,{init:i,year:i.defaultYear,bay:b0,srcYear:i.defaultYear,srcBay:b0,cur:{},rows:{},approve:true,clear:false,rng:{from:1,to:1,crop:'',date:''},res:null,payload:null,done:null,msg:''});
+await bpLoadCur();await bpCopy(bp.srcBay,bp.srcYear)}catch(e){bp.err=e.message;if(bp.init)toast(e.message)}
+bp.loading=false;g.render=true;all()}
+function bpLines(b){const bp=S.gen.bp,rw=bp.rows[b.no];return rw&&rw.length?rw:[{crop:'',date:''}]}
+function bpOutcome(b){const bp=S.gen.bp,rs=bp.res,cur=bp.cur[b.id]||[],ents=(bp.rows[b.no]||[]).filter(x=>x.crop&&x.date);
+if(!ents.length)return cur.length?(bp.clear?'<span class="bpr">Will clear unplanted</span>':'<span class="mu">Left as is</span>'):'<span class="mu">Empty</span>';
+return ents.map(x=>{if(rs){const e=rs.entries.find(q=>q.bed==b.id&&q.crop==x.crop&&q.date==x.date);if(e)return e.status=='NEW'?`<div class="bpn">New${e.wave?' · W'+String(e.wave).padStart(2,'0'):''}</div>`:e.status=='SAME'?'<div class="mu">No change</div>':`<div class="bpr">Refused<div class="mu" style="font-weight:400">${esc(e.reason)}</div></div>`}
+return cur.some(c=>c.crop==x.crop&&c.date==x.date)?'<div class="mu">No change</div>':'<div class="bpn">New</div>'}).join('')}
+function bpTbody(){const bp=S.gen.bp,by=bpBay();return by.beds.map(b=>{const cur=bp.cur[b.id]||[];
+return `<tr><td><b>${esc(b.id)}</b><div class="mu">Bed ${b.no} · ${b.len} ft${b.ok?'':' · not active'}</div></td>
+<td>${bpLines(b).map((x,j)=>`<div class="bpl"><select data-bpn="${b.no}" data-bpj="${j}" data-bpf="crop" aria-label="Crop for ${esc(b.id)}">${bpCropOpts(x.crop)}</select><input type="date" data-bpn="${b.no}" data-bpj="${j}" data-bpf="date" value="${esc(x.date)}" aria-label="Planting date for ${esc(b.id)}">${(bp.rows[b.no]||[]).length?`<button class="chip" data-a="bpdel" data-bpn="${b.no}" data-bpj="${j}" title="Remove this planting">&times;</button>`:''}</div>`).join('')}<button class="chip" data-a="bpadd" data-bpn="${b.no}">+ planting</button></td>
+<td class="mu">${cur.length?cur.map(c=>esc(c.name)+' · '+esc(c.date)+' · '+(c.planted?'planted':c.approved?'approved':'proposed')).join('<br>'):'Empty'}</td><td>${bpOutcome(b)}</td></tr>`}).join('')}
+function bpRows(){const b=el('bpbody');if(b)b.innerHTML=bpTbody();bpStat()}
+function bpDirty(){const bp=S.gen.bp;bp.res=null;bp.payload=null;const r=el('bpres');if(r)r.innerHTML='';const m=el('bpmsg');if(m)m.textContent='Sheet changed: run Preview again.';bpStat()}
+function bpStat(){const g=S.gen;if(!g||!g.bp||!g.bp.init)return;const bp=g.bp,by=bpBay(),go=el('bpgo'),pv=el('bpprev');if(go)go.disabled=!!g.busy||!(bp.res&&!bp.res.blocked);if(pv)pv.disabled=!!g.busy;
+const n=by.beds.filter(b=>(bp.rows[b.no]||[]).some(x=>x.crop)).length,c=el('bpcnt');if(c)c.textContent=n+' of '+by.beds.length+' beds have a crop';
+const hid=Object.keys(bp.rows).filter(k=>(bp.rows[k]||[]).some(x=>x.crop)&&!by.beds.some(b=>b.no==k)).length,h=el('bphid');if(h)h.textContent=hid?hid+' bed'+(hid>1?'s':'')+' in the layout do not exist in '+by.id+' and will be ignored.':''}
+function bpPayload(){const g=S.gen,bp=g.bp,by=bpBay(),ents=[];
+for(const b of by.beds)for(const x of (bp.rows[b.no]||[])){if(!x.crop&&!x.date)continue;if(!x.crop||!x.date){toast(b.id+': pick both a crop and a planting date');return null}ents.push({bed:b.id,crop:x.crop,date:x.date})}
+if(!Number.isInteger(+bp.year)||bp.year<2000||bp.year>2100){toast('Enter a plan year, for example 2028');return null}
+if(!ents.length&&!bp.clear){toast('The sheet has no plantings');return null}
+return{year:+bp.year,bay:bp.bay,entries:ents,approve:bp.approve,clear:bp.clear}}
+function bpResHtml(r){const s=r.summary,k=(l,v)=>`<div><span class="mu">${l}</span><b>${esc(v)}</b></div>`,ic={error:'&#9888; ',warn:'&#9888; ',info:'&#8505; '},ch=r.entries.filter(e=>e.status!='SAME');
+let h=`<div class="kpi">${k('Plantings listed',s.entries)}${k('New cohorts',s.newCount)}${k('No change',s.same)}${k('Refused',s.refused)}${s.clear?k('Will clear',s.clear):''}${s.first?k('First planting',s.first):''}</div>`;
+h+=r.warnings.map(w=>`<div class="wn ${w.level}">${ic[w.level]||''}${esc(w.msg)}</div>`).join('');if(!r.warnings.length)h+='<div class="wn info">No warnings.</div>';
+if(ch.length)h+=`<div style="overflow-x:auto"><table class="gt"><thead><tr><th>Bed</th><th>Crop</th><th>Planting date</th><th>Result</th></tr></thead><tbody>${ch.map(e=>`<tr><td>${esc(e.bed)}</td><td>${esc(e.name)}</td><td>${esc(e.date)}</td><td>${e.status=='NEW'?'<span class="bpn">New · '+esc(e.id)+'</span>':'<span class="bpr">Refused</span> <span class="mu">'+esc(e.reason)+'</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+if(r.clears.length)h+=`<div class="wn">Will be cleared (not yet planted): ${esc(r.clears.map(c=>c.id+' on '+c.bed).join(', '))}</div>`;
+const c=r.capacity;h+=`<div class="mu">Free formula rows: planner ${c.planner}, cohorts ${c.cohort}, assignment queue ${c.assignment}. This deploy uses ${c.needed}.</div>`;return h}
+function bpDoneHtml(r){const bp=S.gen.bp,s=r.summary,k=(l,v)=>`<div><span class="mu">${l}</span><b>${esc(v)}</b></div>`,n=r.created.cohorts;
+return `<div class="row sp"><b style="font-size:16px">${n||r.created.cleared?'Bed plan deployed to '+esc(s.bay)+' '+s.year:'Nothing was written'}</b><button class="btn o" data-a="genclose">Close</button></div>
+<div class="kpi">${k('Cohorts created',n)}${k('Cleared',r.created.cleared)}${k('No change',s.same)}${k('Refused',s.refused)}</div>
+${n?`<div class="mu">${esc(r.ids[0])} to ${esc(r.ids[r.ids.length-1])}. Seasonal Planner, Cohort Production and Bed Assignment were saved together.</div>`:''}
+${r.warnings.filter(w=>w.level!='info').map(w=>`<div class="wn ${w.level}">&#9888; ${esc(w.msg)}</div>`).join('')}
+<div class="mu">${bp.approve?'The beds are approved. Next: the nursery team verifies each bed is ready, then planting is recorded on the ground.':'The rows are PROPOSED. Next: open the assignment queue and approve each bed.'}</div>
+<div class="row"><button class="btn" data-a="bpback">Back to the sheet</button>${bp.approve?'':`<button class="btn" data-a="genq">Open assignment queue (${P.length})</button>`}<button class="btn o" data-a="genclose">Close</button></div>`}
+function drawBed(){const g=S.gen,bp=g.bp,head=`<div class="row sp"><b style="font-size:16px">Season planning</b><button class="btn o" data-a="genclose">Close</button></div>${gTabs()}`;
+if(!bp||bp.loading)return head+'<p class="mu">Loading the bed plan...</p>';
+if(bp.err&&!bp.init)return head+`<div class="wn error">${esc(bp.err)}</div><div class="row"><button class="btn o" data-a="bpretry">Try again</button></div>`;
+if(bp.done)return bpDoneHtml(bp.done);
+const r=bp.rng,by=bpBay(),yrs=[...new Set([...(bp.init.years||[]),bp.year,bp.srcYear])].sort(),maxNo=by.beds.length?by.beds[by.beds.length-1].no:1;
+return head+`<h3 style="margin:4px 0 0">Bed plan sheet</h3>
+<div class="mu">One layout, any bay. Bed numbers are the same in every bay, so pick where it goes and the crops and dates carry over bed-for-bed. Change only what is different this season. Preview writes nothing.</div>
+<b>1 · Layout to start from</b>
+<div class="gf"><label>Year<input id="bp-sy" type="number" min="2000" max="2100" value="${esc(bp.srcYear)}"></label>
+<label>Bay<select id="bp-sb">${bp.init.bays.map(b=>`<option value="${esc(b.id)}" ${b.id==bp.srcBay?'selected':''}>${esc(b.id)} - ${esc(b.name)}</option>`).join('')}</select></label></div>
+<div class="row"><button class="btn o" data-a="bpload">Load this layout</button><button class="btn o" data-a="bpblank">Start blank</button><span class="mu" id="bpnote" role="status">${esc(bp.msg||'')}</span></div>
+<b>2 · Deploy to bay</b>
+<div class="row">${bp.init.bays.map(b=>`<button class="chip ${b.id==bp.bay?'on':''}" data-a="bpbay" data-i="${esc(b.id)}">${esc(b.id)}</button>`).join('')}<label class="mu">Year <input id="bp-year" type="number" min="2000" max="2100" value="${esc(bp.year)}" style="width:80px"></label></div>
+<div class="mu">Switching bay relabels the beds (${esc(by.beds.length?by.beds[0].id:'')} … ${esc(by.beds.length?by.beds[by.beds.length-1].id:'')}) and keeps every crop and date you have set below.<span id="bphid"></span></div>
+<b>3 · Quick edit a range of beds (optional)</b>
+<div class="gf"><label>From bed<input id="bp-rf" type="number" min="1" max="${maxNo}" value="${esc(r.from)}"></label><label>To bed<input id="bp-rt" type="number" min="1" max="${maxNo}" value="${esc(r.to)}"></label>
+<label>Crop<select id="bp-rc">${bpCropOpts(r.crop)}</select></label><label>Planting date<input id="bp-rd" type="date" value="${esc(r.date)}"></label></div>
+<div class="row"><button class="btn o" data-a="bpapply">Apply to range</button><button class="btn o" data-a="bpempty">Empty range</button><span class="mu" id="bpcnt"></span></div>
+<div style="overflow-x:auto"><table class="gt"><thead><tr><th>Bed</th><th>Crop and planting date</th><th>Currently in ${esc(by.id)} ${esc(bp.year)}</th><th>On deploy</th></tr></thead><tbody id="bpbody">${bpTbody()}</tbody></table></div>
+<b>4 · Deploy</b>
+<label style="display:block"><input type="checkbox" id="bp-ap" ${bp.approve?'checked':''}> Approve the beds on deploy (skips the assignment queue). Off = rows are PROPOSED for the queue.</label>
+<label style="display:block"><input type="checkbox" id="bp-cl" ${bp.clear?'checked':''}> Also clear ${esc(by.id)} ${esc(bp.year)} cohorts that are not yet planted and are not in this sheet</label>
+<div class="row"><button class="btn o" data-a="bpprev" id="bpprev">Preview</button><button class="btn" data-a="bpgo" id="bpgo" disabled>Deploy to ${esc(by.id)} ${esc(bp.year)}</button><span class="mu" id="bpmsg" role="status">${bp.res?'':'Run Preview to enable Deploy.'}</span></div>
+<div id="bpres">${bp.res?bpResHtml(bp.res):''}</div>
+<div class="mu">Only plantings that are not already on the bed are written. A planting that overlaps a cohort already in the ground, or another planting here, is refused and listed; nothing else is affected.</div>`}
+function bpSync(){const g=S.gen;if(!g||!g.bp||!g.bp.init||g.tab!='bed')return;const bp=g.bp,v=i=>{const x=el(i);return x?x.value:null};
+if(el('bp-sy')){bp.srcYear=+v('bp-sy')||bp.srcYear;bp.srcBay=v('bp-sb')||bp.srcBay;bp.rng={from:v('bp-rf'),to:v('bp-rt'),crop:v('bp-rc'),date:v('bp-rd')}}}
+async function bpRetarget(){const g=S.gen,bp=g.bp;bp.res=null;bp.payload=null;bp.cur={};g.busy=true;g.render=true;all();try{await bpLoadCur()}catch(e){toast(e.message)}finally{g.busy=false;g.render=true}all()}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]'),g=S.gen;if(!t||!g)return;const a=t.dataset.a;
+if(a=='gtab'&&t.dataset.i=='bed'&&!g.bp){await bpOpen();return}
+if(!['bpload','bpblank','bpbay','bpadd','bpdel','bpapply','bpempty','bpprev','bpgo','bpback','bpretry'].includes(a)||!g.bp)return;
+const bp=g.bp;try{bpSync();
+if(a=='bpretry'){g.bp=null;await bpOpen();return}
+if(g.busy)return;
+if(a=='bpload'){if(!(bp.srcYear>=2000&&bp.srcYear<=2100)){toast('Enter a year, for example 2027');return}g.busy=true;try{await bpCopy(bp.srcBay,bp.srcYear)}finally{g.busy=false}g.render=true}
+else if(a=='bpblank'){bp.rows={};bp.res=null;bp.payload=null;bp.msg='Blank sheet. Add crops and dates, or use a range.';g.render=true}
+else if(a=='bpbay'){if(t.dataset.i==bp.bay)return;bp.bay=t.dataset.i;await bpRetarget()}
+else if(a=='bpadd'){const n=t.dataset.bpn,rw=bp.rows[n]||(bp.rows[n]=[]);if(!rw.length)rw.push({crop:'',date:''});rw.push({crop:'',date:''});bpDirty();g.render=true}
+else if(a=='bpdel'){const rw=bp.rows[t.dataset.bpn];if(rw)rw.splice(+t.dataset.bpj,1);bpDirty();g.render=true}
+else if(a=='bpapply'||a=='bpempty'){const r=bp.rng,by=bpBay(),f=Math.floor(+r.from),z=Math.floor(+r.to);
+if(!(f>=1&&z>=f)){toast('Enter a valid bed range (from is no more than to)');return}
+if(a=='bpapply'&&(!r.crop||!r.date)){toast('Pick a crop and a planting date to apply');return}
+let n=0;by.beds.forEach(b=>{if(b.no>=f&&b.no<=z){bp.rows[b.no]=a=='bpapply'?[{crop:r.crop,date:r.date}]:[];n++}});
+if(!n){toast('No beds in that range for '+by.id);return}
+bp.msg=(a=='bpapply'?'Applied to ':'Emptied ')+n+' bed'+(n>1?'s':'')+' ('+f+' to '+z+').';bpDirty();g.render=true}
+else if(a=='bpprev'){const p=bpPayload();if(!p)return;g.busy=true;const m=el('bpmsg');if(m)m.textContent='Checking against the workbook...';bpStat();try{bp.res=await api('bedPlanPreview',p);bp.payload=p}finally{g.busy=false;g.render=true}}
+else if(a=='bpgo'){if(!bp.res||bp.res.blocked||!bp.payload)return;const s=bp.res.summary;
+if(!confirm('Deploy to '+s.bay+' '+s.year+'?\n\n'+s.newCount+' new cohort'+(s.newCount==1?'':'s')+(bp.payload.approve?' (beds approved)':' (proposed)')+(s.clear?'\n'+s.clear+' unplanted cohort'+(s.clear==1?'':'s')+' cleared':'')+(s.refused?'\n'+s.refused+' refused planting'+(s.refused==1?'':'s')+' skipped':'')+'\n\nAll three tabs are saved together or not at all.'))return;
+g.busy=true;const m=el('bpmsg');if(m)m.textContent='Deploying...';bpStat();try{bp.done=await api('bedPlanDeploy',bp.payload);try{await load()}catch(x){}try{await bpLoadCur()}catch(x){}bp.res=null;bp.payload=null}finally{g.busy=false;g.render=true}}
+else if(a=='bpback'){bp.done=null;g.render=true}}catch(err){toast(err.message)}all()});
+document.addEventListener('change',e=>{const t=e.target,g=S.gen;if(!g||!g.bp||!g.bp.init||g.tab!='bed')return;const bp=g.bp;
+if(t.dataset&&t.dataset.bpf){const n=t.dataset.bpn,rw=bp.rows[n]||(bp.rows[n]=[]),j=+t.dataset.bpj;while(rw.length<=j)rw.push({crop:'',date:''});rw[j][t.dataset.bpf]=t.value;bpDirty();bpRows();return}
+if(t.id=='bp-year'){const y=+t.value;if(!(y>=2000&&y<=2100)){toast('Enter a plan year, for example 2028');t.value=bp.year;return}bp.year=y;bpRetarget();return}
+if(t.id=='bp-ap'){bp.approve=t.checked;bpDirty();return}
+if(t.id=='bp-cl'){bp.clear=t.checked;bpDirty();bpRows();return}
+if(t.id&&t.id.slice(0,3)=='bp-')bpSync()});
 /* ---- Crop profile: one record per crop (read for everyone on the board, edit for the Manager) ---- */
 function cpSecs(v){const nr='<span class="mu">Not recorded</span>',t=x=>x==null||x===''?nr:esc(x),d=n=>n==null?nr:esc(n+(n==1?' day':' days')),R=(l,f,key,kind,pair)=>({l,f,key,kind,pair});
 const chain=v.nurs>0?[v.germ,v.nurs,v.hard,v.est].map(x=>(x==null?'?':x)+'d').join(' → '):'Direct sow: '+(v.germ==null?'?':v.germ)+'d germination → '+(v.est==null?'?':v.est)+'d establishment';

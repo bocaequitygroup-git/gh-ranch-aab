@@ -120,7 +120,7 @@ select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;p
 <div class="ov" id="ov6"><div class="card" role="dialog" aria-modal="true" aria-label="Operation planner"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
-const IS_DEMO=!WEB_APP_URL, TIMEOUT=20000;
+const IS_DEMO=!WEB_APP_URL, TIMEOUT=45000;
 const STAGE={PRE_PLANTING:'#D8CFAE',GROWING:'#8FBF8A',HARVEST_READY:'#2E7D32',HARVEST_COMPLETE:'#7C8B98',TERMINATED:'#C9C2AE'};
 const QCOL={MUST_DO:'#B3261E',ATTENTION:'#C77700',ROUTINE:'#5B8FC9',PROPOSED:'#E0A526'};
 const BAYS=[['GH-1','Bay 1 Cold zone','R',5],['GH-2','Bay 2 Temperate canopy','B',8],['GH-3','Bay 3 Indigenous specialty','B',8],['GH-4','Bay 4 Tropical high-wire','G',5]];
@@ -144,7 +144,8 @@ try{const r=await fetch(WEB_APP_URL,{method:'POST',headers:{'Content-Type':'text
 catch(e){S.net='offline';S.err='cannot reach web app';throw new Error('Could not reach the workbook')}finally{clearTimeout(t)}
 S.net='online';S.err='';if(!j.ok){if(j.error=='Session expired'){S.tok=null;S.user=null;S.needLogin=true;try{sessionStorage.removeItem('gh')}catch(x){}}throw new Error(j.error||'Workbook rejected the change')}return j}
 const WR=new Set(['gengo','vready','override','ovrow','ovapply','plant','ready','done','turn','term','move','verifybed','dispatch','dn','rt','appr','apprall','rej']);
-async function load(){const r=await api('load');BAYS.length=BEDS.length=C.length=P.length=0;S.tasks.length=0;
+async function load(){let r;try{r=await api('load')}catch(e){if(S.net!='offline')throw e;S.net='wait';try{drawTop()}catch(x){}r=await api('load')}   /* one automatic retry: the first call after idle is an Apps Script cold start */
+BAYS.length=BEDS.length=C.length=P.length=0;S.tasks.length=0;
 ACTS.length=0;ACTS.push(...(r.activities||[]));if(!IS_DEMO&&!r.activities)toast('Web app is out of date: redeploy Code_GH.gs as a new version');else if(!IS_DEMO&&!r.activities.length)toast('ACTIVITIES_REFERENCE has no rows with Active = Yes');BAYS.push(...r.bays);BEDS.push(...r.beds);C.push(...r.cohorts);P.push(...r.proposals);S.tasks.push(...r.tasks.map((t,i)=>({...t,i})));
 if(r.workers&&r.workers.length){WORKERS.length=0;WORKERS.push(...r.workers)}
 if(window.pcApply)pcApply(r.prop,r.plan,r.ops);HIST.length=0;HIST.push(...(r.history||[]));Object.keys(DONE).forEach(k=>delete DONE[k]);Object.assign(DONE,r.done||{});OVLOG.length=0;OVLOG.push(...(r.ovLog||[]));Object.keys(OVR).forEach(k=>delete OVR[k]);Object.assign(OVR,r.ovr||{});Object.keys(GATES).forEach(k=>delete GATES[k]);(r.gates||[]).forEach(g=>{GATES[g.bed]=g});S.upd=new Date().toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}

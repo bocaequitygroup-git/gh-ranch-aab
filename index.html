@@ -430,47 +430,56 @@ else if(a=='ygo'){const y=g.y;if(g.busy||!y.res||y.res.blocked||!y.payload)retur
 g.busy=true;try{y.done=await api('yieldGenerate',y.payload);try{await load()}catch(x){}}finally{g.busy=false;g.render=true}}}catch(err){toast(err.message)}all()});
 document.addEventListener('input',e=>{const t=e.target;if(S.gen&&S.gen.tab=='yield'&&S.gen.y&&t.dataset&&t.dataset.y!==undefined){ySync();yLive();yDirty()}});
 
-/* ---- Shortfall crops (Manager only): a normal cohort added mid-year, outside the season plan, tagged SHORTFALL. The manager enters ONLY crop, first planting date and number of waves; bay, beds, footage, spacing, harvest dates etc. are looked up by the system. Preview writes nothing; Create needs a preview first ---- */
-function sfInit(){const g=S.gen;return g.sf||(g.sf={form:{crop:'',date:'',waves:3},res:null,payload:null,done:null})}
-function sfSync(){const g=S.gen;if(!g||!g.sf||!el('sf-crop'))return;const f=g.sf.form,v=i=>{const x=el(i);return x?x.value:''};f.crop=v('sf-crop');f.date=v('sf-date');f.waves=v('sf-waves')}
-function sfCrop(){const g=S.gen,i=g.sfi;return i?i.crops.find(c=>c.id==g.sf.form.crop):null}
-function sfHint(){const c=sfCrop(),h=el('sf-hint');if(!h)return;h.innerHTML=c?`Goes to <b>${esc(c.bay)}</b>, beds ${c.beds.map(esc).join(', ')} - ${c.ftPerWave} ft per wave - ${c.interval} days between waves${c.window?' - planting window: '+esc(c.window):''}`:''}
-function sfStatus(){const g=S.gen,s=g.sf,go=el('sfgo');if(!go)return;const r=s.res;go.disabled=g.busy||!(r&&r.previewed&&!r.blocked&&r.summary.placed>0);el('sfprev').disabled=g.busy||!s.form.crop;sfHint()}
-function sfDirty(){const s=S.gen.sf;s.res=null;s.payload=null;const r=el('sfres');if(r)r.innerHTML='';const m=el('sfmsg');if(m)m.textContent='Inputs changed: run Preview again.';sfStatus()}
-function sfRead(){sfSync();const g=S.gen,f=g.sf.form,n=Number,bad=m=>{toast(m);const x=el('sfmsg');if(x)x.textContent=m;return null};
-if(!f.crop)return bad('Pick a crop');if(!f.date)return bad('Enter the first planting date');if(f.date<d(0))return bad('The first planting date cannot be in the past');if(!(n(f.waves)>=1))return bad('Enter the number of waves');
-return{crop:f.crop,date:f.date,waves:n(f.waves)}}
+/* ---- Urgent production / Shortfall crop (Manager only): a normal cohort added mid-year, outside the season plan, tagged SHORTFALL. The manager chooses crop, planting date and number of waves; the system looks up the rest (bay, beds, footage, spacing, harvest dates). Check writes nothing; Create needs a check first ---- */
+const sfRow=()=>({crop:'',date:'',waves:'3',bpw:'',bay:''});
+function sfInit(){const g=S.gen;return g.sf||(g.sf={rows:[sfRow()],reason:'',res:null,payload:null,confirm:false,done:null})}
+function sfSync(){const g=S.gen;if(!g||!g.sf||!el('sf-reason'))return;const s=g.sf,v=i=>{const x=el(i);return x?x.value:''};s.rows.forEach((r,i)=>{r.crop=v('sf-crop-'+i);r.date=v('sf-date-'+i);r.waves=v('sf-waves-'+i);r.bpw=v('sf-bpw-'+i);r.bay=v('sf-bay-'+i)});s.reason=v('sf-reason');const c=el('sf-conf');if(c)s.confirm=c.checked}
+function sfHint(){const g=S.gen,i=g.sfi;if(!i)return;g.sf.rows.forEach((r,k)=>{const c=i.crops.find(x=>x.id==r.crop),h=el('sf-hint-'+k);if(h)h.innerHTML=c?`Block <b>${esc(r.bay||c.bay)}</b>${r.bay?'':' (from the crop group)'} - beds ${c.beds.map(esc).join(', ')} - ${c.ftPerWave} ft per wave - ${c.interval} days apart${c.window?' - Oregon window: '+esc(c.window):''}`:''})}
+function sfStatus(){const g=S.gen,s=g.sf,go=el('sfgo');if(!go)return;const r=s.res;go.disabled=g.busy||!(r&&r.previewed&&!r.blocked&&r.summary.placed>0&&(!r.needConfirm||s.confirm));el('sfprev').disabled=g.busy||!s.rows.some(x=>x.crop);sfHint()}
+function sfDirty(){const s=S.gen.sf;s.res=null;s.payload=null;s.confirm=false;const r=el('sfres');if(r)r.innerHTML='';const m=el('sfmsg');if(m)m.textContent='Inputs changed: check again.';sfStatus()}
+function sfRead(){sfSync();const g=S.gen,s=g.sf,n=Number,bad=m=>{toast(m);const x=el('sfmsg');if(x)x.textContent=m;return null};const items=[];
+for(const r of s.rows){if(!r.crop&&!r.date&&!r.bpw)continue;if(!r.crop)return bad('Pick a crop');if(!r.date)return bad('Enter the planting date');if(r.date<d(0))return bad('The planting date cannot be in the past');if(!(n(r.waves)>=1))return bad('Enter the number of waves');items.push({crop:r.crop,date:r.date,waves:n(r.waves),bedsPerWave:r.bpw===''?'':n(r.bpw),bay:r.bay})}
+if(!items.length)return bad('Add a crop');return{items,reason:s.reason.trim()}}
+function sfRowHtml(r,k,i){const cl=S.gen.sf.rows.length>1;return `<div class="gf noprint" style="align-items:end"><label>Crop<select id="sf-crop-${k}"><option value="">Choose crop...</option>${i.crops.map(c=>`<option value="${esc(c.id)}" ${r.crop==c.id?'selected':''}>${esc(c.name)} (${esc(c.id.replace(/-GH$/,''))})</option>`).join('')}</select></label>
+<label>Planting date<input id="sf-date-${k}" type="date" min="${esc(i.today)}" value="${esc(r.date)}"></label>
+<label>Waves<input id="sf-waves-${k}" type="number" min="1" max="${i.maxWaves}" value="${esc(r.waves)}"></label>
+<label>Beds/wave <span class="mu">(optional)</span><input id="sf-bpw-${k}" type="number" min="1" max="20" placeholder="plan" value="${esc(r.bpw)}"></label>
+<label>Block<select id="sf-bay-${k}"><option value="">Auto (crop group)</option>${i.bays.map(b=>`<option value="${esc(b[0])}" ${r.bay==b[0]?'selected':''}>${esc(b[0])} - ${esc(b[1])}</option>`).join('')}</select></label>
+${cl?`<button class="btn o" data-a="sfdel" data-i="${k}" aria-label="Remove crop">&#10005;</button>`:''}</div><div class="mu noprint" id="sf-hint-${k}"></div>`}
 function drawShort(){const g=S.gen,s=sfInit();
 if(s.done)return sfDone(s.done);
+const head=`<div class="row sp noprint"><b style="font-size:16px">Season planning</b><button class="btn o" data-a="genclose">Close</button></div>${gTabs()}`;
 if(!g.sfi){if(!g.sfLoading&&!g.sfErr){g.sfLoading=true;api('shortfallInit').then(r=>{g.sfi=r;g.sfLoading=false;g.render=true;all()}).catch(e=>{g.sfLoading=false;g.sfErr=e.message;g.render=true;all()})}
-return `<div class="row sp noprint"><b style="font-size:16px">Season planning</b><button class="btn o" data-a="genclose">Close</button></div>${gTabs()}${g.sfErr?`<div class="wn error">${esc(g.sfErr)}</div><button class="btn o" data-a="sfretry">Try again</button>`:'<p class="mu">Loading crops...</p>'}`}
-const i=g.sfi,f=s.form;
-return `<div class="row sp noprint"><b style="font-size:16px">Season planning</b><button class="btn o" data-a="genclose">Close</button></div>${gTabs()}
-<div class="mu noprint">Add extra production the plan does not cover. Choose the crop, the first planting date and the number of waves; the system fills in everything else (bay, beds, footage, spacing, sow and harvest dates). Each wave becomes a normal cohort tagged <span class="tag sf">Shortfall</span> with its bed reserved, and follows the usual lifecycle from there. The plan is not edited. Preview writes nothing.</div>
-<div class="gf noprint"><label>Crop<select id="sf-crop"><option value="">Pick a crop...</option>${i.crops.map(c=>`<option value="${esc(c.id)}" ${f.crop==c.id?'selected':''}>${esc(c.name)}</option>`).join('')}</select></label>
-<label>First planting date<input id="sf-date" type="date" min="${esc(i.today)}" value="${esc(f.date)}"></label>
-<label>Number of waves<input id="sf-waves" type="number" min="1" max="${i.maxWaves}" value="${esc(f.waves)}"></label></div>
-<div class="mu noprint" id="sf-hint"></div>
-<div class="row noprint"><button class="btn o" id="sfprev" data-a="sfprev">Preview</button><button class="btn" id="sfgo" data-a="sfgo" disabled>Create</button><span class="mu" id="sfmsg" role="status">${s.res?'':'Run Preview to enable Create.'}</span></div>
+return head+(g.sfErr?`<div class="wn error">${esc(g.sfErr)}</div><button class="btn o" data-a="sfretry">Try again</button>`:'<p class="mu">Loading crops...</p>')}
+const i=g.sfi;
+return `${head}<b class="noprint" style="font-size:15px">Urgent production <span class="tag sf">Shortfall crop</span></b>
+<div class="mu noprint">For unexpected demand. Choose the crop, planting date and number of waves. The system checks the Oregon window, picks the block from the crop group, and reserves beds that are free. Each wave becomes a normal cohort tagged Shortfall and follows the usual lifecycle. Nothing is created until you press Create.</div>
+${s.rows.map((r,k)=>sfRowHtml(r,k,i)).join('')}
+<div class="row noprint"><button class="btn o" data-a="sfadd">+ Add another crop</button></div>
+<label class="mu noprint" style="display:grid;gap:3px;margin-top:6px">Why is this needed? (optional, saved on every cohort)<input id="sf-reason" type="text" maxlength="300" placeholder="e.g. Kitchen Alpha wants 40 lb more kale a week" value="${esc(s.reason)}" style="width:100%;color:var(--tx)"></label>
+<div class="row noprint"><button class="btn o" id="sfprev" data-a="sfprev">Check window and beds</button><button class="btn" id="sfgo" data-a="sfgo" disabled>Create</button><button class="btn o" data-a="genclose">Cancel</button><span class="mu" id="sfmsg" role="status">${s.res?'':'Check the window and beds to enable Create.'}</span></div>
 <div id="sfres">${s.res?sfRes(s.res):''}</div>`}
-function sfRes(r){const m=r.summary,k=(l,v)=>`<div><span class="mu">${l}</span><b>${esc(v)}</b></div>`;
+function sfRes(r){const m=r.summary,k=(l,v)=>`<div><span class="mu">${l}</span><b>${esc(v)}</b></div>`,chip=w=>`<span class="opchip ${w=='PASS'?'ok':w=='FAIL'?'bad':'na'}">${w=='NA'?'no window':w=='PASS'?'in window':'outside'}</span>`;
 const st={PLACED:'<span class="opchip ok">Placed</span>',NOROOM:'<span class="opchip bad">No room</span>',DUP:'<span class="opchip na">Already planned</span>'};
-return `<div class="kpi noprint">${k('Bay',m.bay||'-')}${k('Waves placed',m.placed+' of '+m.requested)}${k('Cohorts',m.cohorts)}${k('Ft per wave',m.ftPerWave)}${k('Days apart',m.interval)}</div>
-<div class="wn info noprint">Looked up for ${esc(m.name)}: designated beds ${m.beds.map(esc).join(', ')}; ${m.ftPerWave} ft per wave (${esc(m.ftSource)}); spacing ${m.interval} days (${esc(m.intervalSource)}).${m.window?' Planting window: '+esc(m.window)+'.':''}</div>`
-+r.warnings.map(w=>`<div class="wn ${w.level} noprint">${w.level=='info'?'&#8505; ':'&#9888; '}${esc(w.msg)}</div>`).join('')
-+(r.waves.length?`<div style="overflow-x:auto" class="noprint"><table class="gt" style="margin-top:8px"><thead><tr><th>Wave</th><th>Sow</th><th>Planting date</th><th>Result</th><th>Beds</th><th>First harvest</th></tr></thead><tbody>${r.waves.map(w=>`<tr><td>${w.n}</td><td>${w.status=='PLACED'?esc(w.sow):''}</td><td>${esc(w.date)}</td><td>${st[w.status]||''}</td><td>${w.status=='PLACED'?w.parts.map(p=>esc(p.bed)+' <span class="mu">'+esc(p.seg)+'</span>').join(', '):'<span class="mu">'+esc(w.note||'-')+'</span>'}</td><td>${w.status=='PLACED'?esc(w.harvestFrom)+' to '+esc(w.harvestTo):''}</td></tr>`).join('')}</tbody></table></div>`:'')}
-function sfDone(r){const m=r.summary;return `<div class="row sp noprint"><b style="font-size:16px">Shortfall added</b><button class="btn o" data-a="genclose">Close</button></div><div class="kpi noprint"><div><span class="mu">Cohorts created</span><b>${r.created.cohorts}</b></div><div><span class="mu">Crop</span><b>${esc(m.name)}</b></div><div><span class="mu">Bay</span><b>${esc(m.bay)}</b></div></div>
+return `<div class="kpi noprint">${k('Crops',m.crops)}${k('Waves placed',m.placed+' of '+m.requested)}${k('Cohorts',m.cohorts)}${m.windowFail?k('Outside window',m.windowFail):''}</div>`
++r.warnings.filter(w=>w.code!='NO_RATE').map(w=>`<div class="wn ${w.level} noprint">${w.level=='info'?'&#8505; ':'&#9888; '}${esc(w.msg)}</div>`).join('')
++r.crops.map(c=>`<div class="wn info noprint"><b>${esc(c.name)}</b>: block ${esc(c.bay)}, designated beds ${c.beds.map(esc).join(', ')}; ${c.ftPerWave} ft per wave (${esc(c.ftSource)}); ${c.interval} days apart (${esc(c.intervalSource)}).${c.window?' Oregon window: '+esc(c.window)+'.':''}</div>
+<div style="overflow-x:auto" class="noprint"><table class="gt" style="margin-top:4px"><thead><tr><th>Wave</th><th>Sow</th><th>Planting date</th><th>Oregon window</th><th>Result</th><th>Beds</th><th>First harvest</th></tr></thead><tbody>${c.waves.map(w=>`<tr><td>${w.n}</td><td>${w.status=='PLACED'?esc(w.sow):''}</td><td>${esc(w.date)}</td><td>${chip(w.window)}</td><td>${st[w.status]||''}</td><td>${w.status=='PLACED'?w.parts.map(p=>esc(p.bed)+' <span class="mu">'+esc(p.seg)+'</span>').join(', '):'<span class="mu">'+esc(w.note||'-')+'</span>'}</td><td>${w.status=='PLACED'?esc(w.harvestFrom)+' to '+esc(w.harvestTo):''}</td></tr>`).join('')}</tbody></table></div>`).join('')
++(r.needConfirm&&m.placed>0?`<label class="wn noprint" style="display:flex;gap:8px;align-items:flex-start;margin-top:8px"><input type="checkbox" id="sf-conf" ${S.gen.sf.confirm?'checked':''}> <span>${m.windowFail} wave date${m.windowFail>1?'s fall':' falls'} outside the Oregon planting window. I confirm these waves should be planted anyway.</span></label>`:'')}
+function sfDone(r){const m=r.summary;return `<div class="row sp noprint"><b style="font-size:16px">Shortfall added</b><button class="btn o" data-a="genclose">Close</button></div><div class="kpi noprint"><div><span class="mu">Cohorts created</span><b>${r.created.cohorts}</b></div><div><span class="mu">Crops</span><b>${r.crops.map(c=>esc(c.name)).join(', ')}</b></div></div>
 <div class="mu noprint">${r.ids.map(esc).join(', ')}. Planner, cohorts and bed assignments saved together. Each cohort is in pre-planting with its bed reserved and carries the red Shortfall tag. Verify the bed ready, then record planting as usual.</div>
-${r.waves.filter(w=>w.status!='PLACED').map(w=>`<div class="wn error noprint">Wave ${w.n} (${esc(w.date)}) was not created: ${esc(w.note)}</div>`).join('')}<div class="row noprint"><button class="btn o" data-a="sfagain">Add another</button></div>`}
-document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]'),g=S.gen;if(!t||!g||!['sfprev','sfgo','sfagain','sfretry'].includes(t.dataset.a))return;const a=t.dataset.a;
+${r.crops.map(c=>c.waves.filter(w=>w.status!='PLACED').map(w=>`<div class="wn error noprint">${esc(c.name)} wave ${w.n} (${esc(w.date)}) was not created: ${esc(w.note)}</div>`).join('')).join('')}<div class="row noprint"><button class="btn o" data-a="sfagain">Add another</button></div>`}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]'),g=S.gen;if(!t||!g||!['sfprev','sfgo','sfagain','sfretry','sfadd','sfdel'].includes(t.dataset.a))return;const a=t.dataset.a;
 try{if(a=='sfretry'){g.sfErr='';g.render=true}
 else if(a=='sfagain'){g.sf=null;g.render=true}
-else if(a=='sfprev'){if(g.busy)return;const p=sfRead();if(!p)return;g.busy=true;const m=el('sfmsg');if(m)m.textContent='Calculating preview...';try{const r=await api('shortfallPreview',p);g.sf.res=r;g.sf.payload=p}finally{g.busy=false;g.render=true}}
-else if(a=='sfgo'){const s=g.sf,r=s.res;if(g.busy||!r||!r.previewed||r.blocked||!s.payload)return;
-if(!confirm('Create '+r.summary.cohorts+' shortfall cohort'+(r.summary.cohorts>1?'s':'')+' of '+r.summary.name+' in '+r.summary.bay+'?\nPlanner, cohorts and bed assignments are saved together or not at all.'))return;
-g.busy=true;try{s.done=await api('shortfallCreate',s.payload);try{await load()}catch(x){}}finally{g.busy=false;g.render=true}}}catch(err){toast(err.message)}all()});
-document.addEventListener('input',e=>{const t=e.target,g=S.gen;if(!g||g.tab!='short'||!g.sf||!t.id||t.id.slice(0,3)!='sf-')return;sfSync();sfDirty()});
-document.addEventListener('change',e=>{const t=e.target,g=S.gen;if(!g||g.tab!='short'||!g.sf||!t.id||t.id.slice(0,3)!='sf-')return;sfSync();sfDirty()});
+else if(a=='sfadd'){sfSync();g.sf.rows.push(sfRow());sfDirty();g.render=true}
+else if(a=='sfdel'){sfSync();g.sf.rows.splice(+t.dataset.i,1);if(!g.sf.rows.length)g.sf.rows.push(sfRow());sfDirty();g.render=true}
+else if(a=='sfprev'){if(g.busy)return;const p=sfRead();if(!p)return;g.busy=true;const m=el('sfmsg');if(m)m.textContent='Checking...';try{const r=await api('shortfallPreview',p);g.sf.res=r;g.sf.payload=p;g.sf.confirm=false}finally{g.busy=false;g.render=true}}
+else if(a=='sfgo'){const s=g.sf,r=s.res;sfSync();if(g.busy||!r||!r.previewed||r.blocked||!s.payload)return;if(r.needConfirm&&!s.confirm){toast('Tick the Oregon window confirmation first');return}
+const p=Object.assign({},s.payload,{reason:s.reason.trim(),confirmWindow:!!s.confirm});if(!confirm('Create '+r.summary.cohorts+' shortfall cohort'+(r.summary.cohorts>1?'s':'')+'?\n'+'Planner, cohorts and bed assignments are saved together or not at all.'))return;
+g.busy=true;try{s.done=await api('shortfallCreate',p);try{await load()}catch(x){}}finally{g.busy=false;g.render=true}}}catch(err){toast(err.message)}all()});
+document.addEventListener('input',e=>{const t=e.target,g=S.gen;if(!g||g.tab!='short'||!g.sf||!t.id||t.id.slice(0,3)!='sf-')return;sfSync();if(t.id=='sf-reason')return;if(t.id=='sf-conf'){sfStatus();return}sfDirty()});
+document.addEventListener('change',e=>{const t=e.target,g=S.gen;if(!g||g.tab!='short'||!g.sf||!t.id||t.id.slice(0,3)!='sf-')return;sfSync();if(t.id=='sf-conf'){sfStatus();return}if(t.id=='sf-reason')return;sfDirty()});
 /* ---- Bed plan sheet (Manager only): one layout, any bay. Fill the sheet, Preview (writes nothing), then Deploy ---- */
 function bpShift(s,k){if(!k||!/^\d{4}-\d{2}-\d{2}$/.test(s||''))return s;const p=s.split('-').map(Number),last=new Date(Date.UTC(p[0]+k,p[1],0)).getUTCDate();return String(p[0]+k)+'-'+String(p[1]).padStart(2,'0')+'-'+String(Math.min(p[2],last)).padStart(2,'0')}
 const bpBay=()=>{const bp=S.gen.bp;return bp.init.bays.find(b=>b.id==bp.bay)||{id:bp.bay,name:'',beds:[]}};

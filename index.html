@@ -30,6 +30,7 @@ aside h2{font-size:15px;margin:0 0 8px}.card{border:1px solid var(--ln);border-r
 .gf{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}.gf label{display:grid;gap:3px;font-size:12px;color:var(--mu)}.gf input,.gf select{width:100%;color:var(--tx)}
 .crops{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:3px 12px;max-height:190px;overflow:auto;border:1px solid var(--ln);border-radius:6px;padding:6px 8px}.crops label{font-size:13px}
 #ov5 .card{width:min(900px,96vw);max-height:92vh;overflow:auto;align-content:start}
+#ov8 .card{width:min(820px,96vw);max-height:92vh;overflow:auto;align-content:start}#ov8 table{border-collapse:collapse;width:100%;font-size:12px}#ov8 th,#ov8 td{border-bottom:1px solid var(--ln);padding:4px 6px;text-align:left}#ov8 .arb{border:1px solid var(--ln);border-radius:8px;padding:10px;display:grid;gap:6px}@media(max-width:700px){#ov8 .card{width:100vw;height:100%;max-height:100%;border-radius:0}}
 @media(max-width:700px){#ov5 .card{width:100vw;height:100%;max-height:100%;border-radius:0}}#ov7 .card{width:min(420px,94vw);max-height:92vh;overflow:auto;align-content:start}#ov7 summary{cursor:pointer;margin:2px 0 6px}
 .lt{width:100%;border-collapse:collapse;font-size:13px}.lt th,.lt td{padding:5px 8px;border-bottom:1px solid var(--ln);text-align:left}.lt td.n,.lt th.n{text-align:right;font-variant-numeric:tabular-nums}.lt tr.g td{background:var(--av);font-weight:600}.lt tr.t td{font-weight:700;border-top:2px solid var(--ln)}
 .pinbox{border:2px solid #2e7d32;background:var(--av);border-radius:8px;padding:8px 12px}.pinbox b{font-size:22px;letter-spacing:3px}
@@ -109,19 +110,20 @@ select,input{border:1px solid var(--ln);background:var(--pn);border-radius:6px;p
 @media(max-width:700px){#ov6 .card{width:100vw;height:100%;border-radius:0}}
 .spin{display:inline-block;width:12px;height:12px;border:2px solid var(--tx);border-top-color:transparent;border-radius:50%;vertical-align:-2px;animation:sfspin .8s linear infinite}@keyframes sfspin{to{transform:rotate(360deg)}}</style></head><body>
 <nav><h1>Activity Assignment Board - Ngapori Ranch Greenhouse</h1><span class="pill" id="net"></span>
-<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="opl" id="opb">Operation planner</button><button data-a="tmopen" id="tmb">Team</button><button data-a="lhopen" id="lhb">Labor hours</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
+<button data-a="plan" id="plb">Season planning</button><button data-a="pcal" id="pcb">Production calendars</button><button data-a="cprof" id="cpb">Crop profile</button><button data-a="opl" id="opb">Operation planner</button><button data-a="tmopen" id="tmb">Team</button><button data-a="lhopen" id="lhb">Labor hours</button><button data-a="archopen" id="arb">Archive</button><button data-a="refresh">Refresh</button><button data-a="theme">Theme</button><button data-a="login" id="lg">Log out</button></nav>
 <main><section class="map"><div class="tb" id="tb"></div><div class="tb" id="vw"></div><div class="leg" id="lg2"></div>
 <svg id="svg" viewBox="0 0 780 770" role="img" aria-label="Greenhouse bed map"></svg></section><aside id="side"></aside></main>
 <div class="ov" id="ov"><div class="card"><b>Sign in</b><select id="lu"></select><input id="lp" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off"><button class="btn" data-a="dologin">Log in</button><span class="mu">Managers and owners only.</span></div></div>
 <div class="ov" id="ov2"><div class="card" role="dialog" aria-modal="true" aria-label="Season planning"></div></div>
 <div class="ov" id="ov4"><div class="card" role="dialog" aria-modal="true" aria-label="Production calendars"></div></div>
+<div class="ov" id="ov8"><div class="card" role="dialog" aria-modal="true" aria-label="Year-end archive"></div></div>
 <div class="ov" id="ov5"><div class="card" role="dialog" aria-modal="true" aria-label="Team and labor hours"></div></div>
 <div class="ov" id="ov3"><div class="card" role="dialog" aria-modal="true" aria-label="Crop profile"></div></div>
 <div class="ov" id="ov7"><div class="card" role="dialog" aria-modal="true" aria-label="Add activity"></div></div>
 <div class="ov" id="ov6"><div class="card" role="dialog" aria-modal="true" aria-label="Operation planner"></div></div>
 <script>
 const WEB_APP_URL='https://script.google.com/macros/s/AKfycbxI5EoHK-uRAthC9-V6X1xkXaNvGJYuBmOyI4ox7xeNiTw6rmRPA6mWbw01wKzTbtw5Aw/exec';           // paste the Apps Script web app /exec URL (Code_GH.gs); blank = demo mode
-const IS_DEMO=!WEB_APP_URL, TIMEOUT=45000;
+let TIMEOUT=45000;const IS_DEMO=!WEB_APP_URL;
 const STAGE={PRE_PLANTING:'#D8CFAE',GROWING:'#8FBF8A',HARVEST_READY:'#2E7D32',HARVEST_COMPLETE:'#7C8B98',TERMINATED:'#C9C2AE'};
 const QCOL={MUST_DO:'#B3261E',ATTENTION:'#C77700',ROUTINE:'#5B8FC9',PROPOSED:'#E0A526'};
 const BAYS=[['GH-1','Bay 1 Cold zone','R',5],['GH-2','Bay 2 Temperate canopy','B',8],['GH-3','Bay 3 Indigenous specialty','B',8],['GH-4','Bay 4 Tropical high-wire','G',5]];
@@ -162,7 +164,7 @@ if(c)return STAGE[c.stage];return{PROPOSED:'#F6E3B0',UNVERIFIED:'#cfd4d0',AVAILA
 const el=id=>document.getElementById(id),esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 function drawTop(){el('net').innerHTML=S.net=='demo'?'Demo mode (no web app URL)':S.net=='wait'?'Connecting...':S.net=='online'?`<span class="dot" style="background:#66bb6a"></span>Connected${S.upd?' - updated '+S.upd:''}`:`<span class="dot" style="background:#ef5350"></span>Not connected${S.err?': '+esc(S.err):''}`;
-el('plb').style.display=canGen()?'':'none';el('opb').style.display=canGen()?'':'none';['tmb','lhb'].forEach(x=>{const b=el(x);if(b)b.style.display=S.user&&!IS_DEMO?'':'none'});el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
+el('plb').style.display=canGen()?'':'none';el('opb').style.display=canGen()?'':'none';el('arb').style.display=canGen()&&!IS_DEMO?'':'none';['tmb','lhb'].forEach(x=>{const b=el(x);if(b)b.style.display=S.user&&!IS_DEMO?'':'none'});el('lg').textContent=S.user?'Log out'+(S.user.name?' ('+S.user.name+')':''):'Log in';el('ov').style.display=S.needLogin?'flex':'none';
 el('tb').innerHTML=['ALL','OCCUPIED','PROPOSED','AVAILABLE','UNVERIFIED','POST_HARVEST','EXCEPTION'].map(f=>`<button class="chip ${S.filt==f?'on':''}" data-f="${f}">${f.replace('_',' ').toLowerCase()}</button>`).join('')+`<button class="btn" data-a="queue">Assignment queue (${P.length})</button>`;
 el('vw').innerHTML=['stage','queue'].map(v=>`<button class="chip ${S.view==v?'on':''}" data-v="${v}">${v=='stage'?'Current stage':'Queue priority'}</button>`).join('');
 const L=S.view=='stage'?Object.entries(STAGE):Object.entries(QCOL);el('lg2').innerHTML=L.map(([k,v])=>`<span><i style="background:${v}"></i>${k.replace('_',' ').toLowerCase()}</span>`).join('')+'<span><i style="background:#E4EDE6;border:1px solid #9bb0a2"></i>available</span><span><i style="background:#C77700;border-radius:50%"></i>required steps open</span>'}
@@ -297,7 +299,7 @@ if(S.tab=='Exceptions'){h+=EX.filter(e=>e.bed==b).map(e=>`<div class="card row s
 if(S.tab=='Harvest'){h+=c?`<div class="card">Expected first harvest<br><b>${c.hs}</b> to <b>${c.he}</b><div class="mu">${c.stage=='HARVEST_READY'?'Ready now. Dispatch a harvest task, then mark harvest complete.':'Not ready yet.'}</div></div>${c.stage=='HARVEST_READY'?`<button class="btn" data-a="done" ${lk(b)}>Mark harvest complete</button>${gnote(b)}`:''}`:'<p class="mu">No cohort to harvest.</p>'}
 el('side').innerHTML=h;const pl1=el('pl');if(pl1)pl1.scrollTop=S.psc||0}
 function drawQueue(){el('side').innerHTML=`<div class="row sp"><h2>Assignment queue</h2><button class="btn o" data-a="close">Close</button></div><p class="mu">Proposed bed placements for planned cohorts. Nothing is written to production until you approve.</p>${P.length?`<button class="btn" data-a="apprall">Approve all</button>`:''}${P.map(p=>`<div class="card"><b>${esc(p.crop)}</b><div class="mu">${p.id} - plant ${p.date}${p.ft?' - '+p.ft+' ft'+(p.seg?' ('+p.seg+')':''):''}</div><div class="row" style="margin-top:6px"><select id="q-${p.id}">${BEDS.map(b=>`<option ${b.id==p.rec?'selected':''}>${b.id}</option>`).join('')}</select><button class="btn" data-a="appr" data-i="${p.id}">Approve</button><button class="btn r" data-a="rej" data-i="${p.id}">Reject</button></div></div>`).join('')||'<p class="mu">Queue is clear.</p>'}`}
-function all(){if(S.needLogin)S.gen=null;drawTop();drawMap();side();drawGenView()}
+function all(){if(S.needLogin){S.gen=null;if(S.ar){S.ar=null;arView()}}drawTop();drawMap();side();drawGenView()}
 async function approve(id){const p=P.find(x=>x.id==id),bed=(el('q-'+id)||{}).value||p.rec;const occ=C.filter(c=>c.bed==bed&&c.stage!='TERMINATED'&&c.stage!='HARVEST_COMPLETE'),bl=((BEDS.find(b=>b.id==bed)||{}).len)||0;if(occ.length&&(!p.ft||occ.reduce((n,c)=>n+(c.ft||bl),0)+p.ft>bl)){toast(bed+(p.ft?' has no room for '+p.ft+' ft. Pick another bed.':' is occupied. Pick another bed.'));return false}
 await api('approveAssignment',{cohort:id,bed});C.push({id,crop:p.crop,bed,stage:'PRE_PLANTING',ft:p.ft||0,dob:p.date,hs:p.date,he:p.date});P.splice(P.indexOf(p),1);return true}
 /* ---- Season planning (Manager only): fill the form, Preview (writes nothing), then Generate ---- */
@@ -955,4 +957,61 @@ document.addEventListener('input',e=>{const t=e.target,O=S.op;if(!O)return;if(t.
 const f=t.dataset&&t.dataset.op;if(!f)return;const id=t.dataset.id,c=O.crops.find(x=>x.id==id);if(!c)return;const ed=O.edits[id]||(O.edits[id]={});ed[f]=t.value;
 if(['start','waves','ovr'].every(k=>!(k in ed)||ed[k]==opOrig(c,k)))delete O.edits[id];O.err='';opPaint(id);opHead()});
 document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.op)opClose()});
+
+/* ===== Year-end archive (Manager only): close a finished year, preview, archive, restore a batch. Backend: planLockStatus/planLockSet, archivePreview/archiveRun/archiveRestore/archiveStatus ===== */
+async function arApi(a,p,long){const o=TIMEOUT;if(long)TIMEOUT=300000;try{return await api(a,p)}finally{TIMEOUT=o}}
+async function arLoad(quiet){const A=S.ar;if(!A)return;if(!quiet){A.busy='Loading...';arView()}try{const [st,lk]=await Promise.all([arApi('archiveStatus'),arApi('planLockStatus')]);A.st=st;A.lk=lk;if(!A.yr)A.yr=String(new Date().getFullYear()-1)}catch(e){A.err=e.message}A.busy='';arView()}
+function arView(){const o=el('ov8'),A=S.ar;if(!o)return;o.style.display=A?'flex':'none';if(!A)return;const box=o.firstElementChild,bz=!!A.busy,dis=bz?' disabled':'';
+const st=A.st,lk=A.lk,pv=A.pv,rs=A.res,lock=st?st.lockedThrough:0;
+let h=`<div class="row sp"><b style="font-size:16px">Year-end archive</b><button class="btn o" data-a="archclose"${dis}>Close</button></div>
+<div class="mu">Moves finished seasons out of the three live tabs into GH_ARCHIVE_PLANNER, GH_ARCHIVE_COHORT and GH_ARCHIVE_ASSIGN, and frees the rows. Every step is checked, and any failure puts everything back.</div>`;
+if(A.err)h+=`<div class="wn error">${esc(A.err)}</div>`;
+if(A.msg)h+=`<div class="wn info">${esc(A.msg)}</div>`;
+if(bz)h+=`<div class="wn info"><b>${esc(A.busy)}</b> Do not close this page.</div>`;
+if(!st){box.innerHTML=h;return}
+const cap=st.capacity||{},tot=cap.total||{},fr=cap.free||{};
+const capTxt=['sp','cp','ba'].filter(k=>tot[k]!=null).map(k=>({sp:'Seasonal Planner',cp:'Cohort Production',ba:'Bed Assignment'}[k])+' '+fr[k]+' free of '+tot[k]).join(' | ');
+h+=`<div class="arb"><b>Status</b><div>Planning is closed through <b>${lock||'no year yet'}</b>${lk&&lk.nextOpenYear?'. Next open year: <b>'+lk.nextOpenYear+'</b>':''}.</div>${lk&&lk.activeYears&&lk.activeYears.length?`<div class="mu">Years still live: ${esc(lk.activeYears.join(', '))}</div>`:''}${capTxt?`<div class="mu">Rows: ${esc(capTxt)}</div>`:''}</div>`;
+h+=`<div class="arb"><b>1. Close a finished year</b><div class="mu">Only a year that has ended can be closed, and only when every seasonal cohort in it is released, terminated or rejected. The lock never moves backwards.</div><div class="row"><input id="ar-yr" type="number" min="2000" max="2100" value="${esc(A.yr||'')}" style="width:90px"${dis}><button class="btn" data-a="archlock"${dis}>Close through this year</button></div></div>`;
+h+=`<div class="arb"><b>2. Preview</b><div class="mu">Writes nothing. Shows what would be archived and why anything is skipped.</div><div><button class="btn" data-a="archprev"${dis}${lock?'':' title="Close a year first"'}>Preview archive</button></div>`;
+if(pv){h+=`<div><b>${pv.eligible}</b> cohort${pv.eligible==1?'':'s'} eligible${pv.byYear?' ('+Object.keys(pv.byYear).map(y=>y+': '+pv.byYear[y]).join(', ')+')':''}.${pv.permanentKept?' '+pv.permanentKept+' permanent-crop cohort(s) stay.':''}</div>`;
+if(pv.note)h+=`<div class="wn info">${esc(pv.note)}</div>`;
+if(pv.capacity){h+=`<table><tr><th>Tab</th><th>Rows used now</th><th>After</th><th>Free after</th></tr>${Object.keys(pv.capacity).map(k=>{const c=pv.capacity[k];return`<tr><td>${esc(k)}</td><td>${c.usedNow}</td><td>${c.usedAfter}</td><td>${c.freeAfter}</td></tr>`}).join('')}</table>`}
+if(pv.occupancy){const oc=pv.occupancy;h+=oc.healthy===false?`<div class="wn error">${esc(oc.note)}</div>`:oc.checked?`<div class="mu">Bed occupancy report is healthy and will be compared before and after (${Object.keys(oc.counts||{}).map(k=>esc(k)+' '+esc(oc.counts[k])).join(', ')}).</div>`:`<div class="wn">${esc(oc.note||'')}</div>`}
+if(pv.skippedCount){h+=`<details><summary>${pv.skippedCount} skipped${pv.skippedCount>pv.skipped.length?' (first '+pv.skipped.length+' shown)':''}</summary><table><tr><th>Cohort</th><th>Year</th><th>Reason</th></tr>${pv.skipped.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.year)}</td><td>${esc(x.reason)}</td></tr>`).join('')}</table></details>`}
+if(pv.ids&&pv.ids.length)h+=`<details><summary>Cohort IDs to archive${pv.eligible>pv.ids.length?' (first '+pv.ids.length+')':''}</summary><div class="mu">${pv.ids.map(esc).join(', ')}</div></details>`}
+h+='</div>';
+const can=!!(pv&&pv.canRun&&pv.eligible>0);
+h+=`<div class="arb"><b>3. Archive</b><label style="display:flex;gap:6px;align-items:flex-start"><input type="checkbox" id="ar-copy"${A.copy?' checked':''}${dis}><span>I have made a copy of VPOS-GH (File > Make a copy) and ran this on the copy first, or I accept the risk on the live workbook.</span></label><div><button class="btn r" data-a="archrun"${can&&A.copy&&!bz?'':' disabled'}>${can?'Archive '+pv.eligible+' cohort'+(pv.eligible==1?'':'s'):'Archive (run a preview first)'}</button></div>`;
+if(rs&&rs.batch)h+=`<div class="wn info"><b>Archived ${rs.archived} cohort${rs.archived==1?'':'s'} as ${esc(rs.batch)}.</b> Copies, registry, compaction and the bed-occupancy check all passed${rs.verified&&rs.verified.occupancy?' ('+esc(rs.verified.occupancy)+')':''}. Press Refresh on the board to reload.</div>`;
+else if(rs&&rs.message)h+=`<div class="wn info">${esc(rs.message)}</div>`;
+h+='</div>';
+const bs=st.batches||[];
+h+=`<div class="arb"><b>Archive batches</b>${bs.length?`<table><tr><th>Batch</th><th>Cohorts</th><th>Years</th><th>Archived</th><th></th></tr>${bs.map(b=>`<tr><td>${esc(b.batch)}</td><td>${b.cohorts}</td><td>${esc((b.years||[]).join(', '))}</td><td>${esc(b.archivedOn||'')}</td><td><button class="btn o" data-a="archrest" data-i="${esc(b.batch)}"${dis}>Restore</button></td></tr>`).join('')}</table><div class="mu">Restore puts a whole batch back into free rows and removes its registry rows. Planned_DOB comes back as a value, not the Green House Operation formula.</div>`:'<div class="mu">Nothing has been archived yet.</div>'}</div>`;
+const sx=box.scrollTop;box.innerHTML=h;box.scrollTop=sx}
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t||!/^arch/.test(t.dataset.a))return;const a=t.dataset.a,A=S.ar;
+try{if(a=='archopen'){if(IS_DEMO){toast('Needs the connected workbook (demo mode has no data)');return}if(!canGen()){toast('Archiving is for the Manager role');return}S.ar={st:null,lk:null,pv:null,res:null,msg:'',err:'',busy:'Loading...',copy:false,yr:''};arView();await arLoad(true);return}
+if(!A||A.busy)return;
+if(a=='archclose'){S.ar=null;arView();return}
+const yr=el('ar-yr');if(yr)A.yr=yr.value;
+A.err='';A.msg='';
+if(a=='archlock'){const y=Number(A.yr);if(!Number.isInteger(y)||y<2000||y>2100){A.err='Enter a four-digit year.';arView();return}
+if(!confirm('Close planning through '+y+'?\n\nNo new cohorts can be planned for '+y+' or earlier, and this cannot be moved backwards from the board.'))return;
+A.busy='Closing '+y+'...';arView();const r=await arApi('planLockSet',{year:y});A.pv=null;A.res=null;A.msg=r.changed===false?'Planning was already closed through '+r.lockedThrough+'.':'Planning is now closed through '+r.lockedThrough+'.';await arLoad(true);return}
+if(a=='archprev'){A.busy='Calculating preview...';A.res=null;arView();A.pv=await arApi('archivePreview');A.busy='';arView();return}
+if(a=='archrun'){const pv=A.pv;if(!pv||!pv.canRun||!A.copy)return;
+if(!confirm('Archive '+pv.eligible+' cohort'+(pv.eligible==1?'':'s')+' (plan years up to '+pv.lockedThrough+')?\n\nThey are copied to the GH_ARCHIVE_* tabs and removed from the live tabs. If any check fails, everything is put back.'))return;
+A.busy='Archiving '+pv.eligible+' cohorts (this can take a minute)...';arView();
+try{A.res=await arApi('archiveRun',{confirm:true,expectCount:pv.eligible},true);A.pv=null;A.busy='';await arLoad(true)}
+catch(err){A.err=err.message+(/reach the workbook/.test(err.message)?' The request may still have finished: check the batch list below before trying again.':'');A.busy='';A.pv=null;await arLoad(true)}
+return}
+if(a=='archrest'){const b=t.dataset.i;if(!confirm('Restore batch '+b+'?\n\nIts cohorts go back into the live tabs and its registry rows are removed. Planned_DOB comes back as a value, not the formula.'))return;
+A.busy='Restoring '+b+'...';arView();
+try{const r=await arApi('archiveRestore',{batch:b},true);A.pv=null;A.res=null;A.msg='Restored '+r.restored+' cohort'+(r.restored==1?'':'s')+' from '+b+'. '+(r.note||'')+' Press Refresh on the board to reload.';A.busy='';await arLoad(true)}
+catch(err){A.err=err.message;A.busy='';await arLoad(true)}
+return}
+}catch(err){if(S.ar){S.ar.err=err.message;S.ar.busy='';arView()}else toast(err.message)}});
+document.addEventListener('change',e=>{if(S.ar&&e.target.id=='ar-copy'){S.ar.copy=e.target.checked;arView()}});
+document.addEventListener('input',e=>{if(S.ar&&e.target.id=='ar-yr')S.ar.yr=e.target.value});
+document.addEventListener('keydown',e=>{if(e.key=='Escape'&&S.ar&&!S.ar.busy){S.ar=null;arView()}});
 </script></body></html>
